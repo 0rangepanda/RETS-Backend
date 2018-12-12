@@ -1,0 +1,42 @@
+/build
+/build-32
+/build-64
+/build-x86
+/build-x64
+/dist
+/scratch
+
+.*
+*~
+.svn
+
+# autoconf stuff
+/Makefile
+/project/build/Doxyfile
+/autom4te.cache
+/config.log
+/config.status
+/librets-config
+/librets-config-inplace
+/project/librets/src/config.h
+
+# Xcode user files
+*.mode1
+*.pbxuser
+*.mode2
+*.perspective
+
+# SWIG C#
+/project/swig/csharp/lib/*.cs
+/project/swig/csharp/librets_wrap.cpp
+
+# SWIG Perl
+/project/swig/perl/librets.pm
+
+# SWIG Python
+/project/swig/python/librets.py
+/project/swig/python/librets_wrap.cpp
+
+# SWIG Ruby
+/project/swig/ruby/Makefile
+/project/swig/ruby/librets_wrap.cpp

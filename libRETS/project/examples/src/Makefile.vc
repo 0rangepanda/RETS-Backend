@@ -1,0 +1,112 @@
+!include <../../build/Makefile.vc>
+
+LIBRETS_LIB = ../../librets/src/$(BUILD_DIR)/$(LIBRETS_LIB_NAME)
+
+########################################################################
+#
+
+XML_EXE = $(DIROBJ)\xml.exe
+HTTP_EXE = $(DIROBJ)\http.exe
+RAW_RETS_EXE = $(DIROBJ)\raw_rets.exe
+LOGIN_EXE = $(DIROBJ)\login.exe
+METADATA_EXE = $(DIROBJ)\metadata.exe
+SEARCH_EXE = $(DIROBJ)\search.exe
+GET_OBJECT_EXE = $(DIROBJ)\get-object.exe
+
+TARGET  = $(XML_EXE) $(HTTP_EXE) $(RAW_RETS_EXE) $(LOGIN_EXE) $(METADATA_EXE) \
+	$(SEARCH_EXE) $(GET_OBJECT_EXE)
+
+!if "$(USE_SQL_COMPILER)" == "true" 
+SQL2DMQL_EXE = $(DIROBJ)\sql2dmql.exe
+TARGET  = $(XML_EXE) $(HTTP_EXE) $(RAW_RETS_EXE) $(LOGIN_EXE) $(METADATA_EXE) \
+	$(SEARCH_EXE) $(SQL2DMQL_EXE) $(GET_OBJECT_EXE)
+!endif
+
+CFLAGS  = $(CFLAGS_STD) /I../../librets/include $(BOOST_CFLAGS)
+LDFLAGS = $(LDFLAGS_STD) $(LINK_DEBUG_FLAG) $(LIBRETS_LIB) $(BOOST_LDFLAGS)
+
+LINK = $(LINK_EXE) $(LDFLAGS)
+
+########################################################################
+#
+
+
+OPTIONS_OBJS = $(DIROBJ)\Options.obj
+
+XML_OBJS = $(DIROBJ)\xml.obj
+
+HTTP_OBJS = $(DIROBJ)\http.obj
+
+RAW_RETS_OBJS = $(DIROBJ)\raw-rets.obj
+
+LOGIN_OBJS = $(DIROBJ)\login.obj $(OPTIONS_OBJS)
+
+METADATA_OBJS = $(DIROBJ)\metadata.obj $(OPTIONS_OBJS)
+
+SEARCH_OBJS = $(DIROBJ)\search.obj $(OPTIONS_OBJS)
+
+GET_OBJECT_OBJS = $(DIROBJ)\get-object.obj $(OPTIONS_OBJS)
+
+X_OBJS = $(XML_OBJS) $(HTTP_OBJS) $(RAW_RETS_OBJS) $(LOGIN_OBJS) \
+	$(METADATA_OBJ) $(SEARCH_OBJ) $(GET_OBJECT_OBJS)
+
+!if "$(USE_SQL_COMPILER)" == "true" 
+SQL2DMQL_OBJS = $(DIROBJ)\sql2dmql.obj
+X_OBJS = $(XML_OBJS) $(HTTP_OBJS) $(RAW_RETS_OBJS) $(LOGIN_OBJS) \
+	$(METADATA_OBJ) $(SEARCH_OBJ) $(SQL2DMQL_OBJS) $(GET_OBJECT_OBJS)
+!endif
+
+all: $(TARGET)
+
+$(XML_EXE): $(XML_OBJS)
+	$(LINK) /out:$(XML_EXE) $(XML_OBJS)
+
+$(HTTP_EXE): $(HTTP_OBJS)
+	$(LINK) /out:$(HTTP_EXE) $(HTTP_OBJS) $(WINLIBS)
+
+$(RAW_RETS_EXE): $(RAW_RETS_OBJS)
+	$(LINK) /out:$(RAW_RETS_EXE) $(RAW_RETS_OBJS) $(WINLIBS)
+
+$(LOGIN_EXE): $(LOGIN_OBJS)
+	$(LINK) /out:$(LOGIN_EXE) $(LOGIN_OBJS) \
+	$(WINLIBS)
+
+$(METADATA_EXE): $(METADATA_OBJS)
+	$(LINK) /out:$(METADATA_EXE) $(METADATA_OBJS) \
+	$(WINLIBS)
+
+$(SEARCH_EXE): $(SEARCH_OBJS)
+	$(LINK) /out:$(SEARCH_EXE) $(SEARCH_OBJS) \
+	$(WINLIBS)
+
+!if "$(USE_SQL_COMPILER)" == "true" 
+$(SQL2DMQL_EXE): $(SQL2DMQL_OBJS)
+	$(LINK) /out:$(SQL2DMQL_EXE) $(SQL2DMQL_OBJS) \
+	$(WINLIBS)
+!endif
+
+$(GET_OBJECT_EXE): $(GET_OBJECT_OBJS)
+	$(LINK) /out:$(GET_OBJECT_EXE) $(GET_OBJECT_OBJS) \
+	$(WINLIBS)
+
+$(X_OBJS): $(DIROBJ) $(LIBRETS_LIB)
+
+$(BUILD_DIR):
+	@if not exist "$(BUILD_DIR)" mkdir $(BUILD_DIR)
+
+$(DIROBJ):
+	@if not exist "$(DIROBJ)" mkdir $(DIROBJ)
+
+clean:
+	@-rmdir /q /s $(BUILD_DIR) 2> NUL
+	@-erase /s vc*.pch 2> NUL
+	@-erase /s vc*.idb 2> NUL
+	@-erase /s vc*.pdb 2> NUL
+
+.SUFFIXES: .c .cpp .obj .res
+
+{.\}.c{$(DIROBJ)\}.obj:
+	$(CC) $(CFLAGS) /Fo"$@"  $<
+
+{.\}.cpp{$(DIROBJ)\}.obj:
+	$(CXX) $(CFLAGS) /Fo"$@"  $<

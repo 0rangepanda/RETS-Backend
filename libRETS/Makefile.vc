@@ -1,0 +1,176 @@
+!include <project/build/Makefile.vc>
+
+all: lib-release-dynamic
+	cd project\examples\src
+	$(NMAKE) /f Makefile.vc BUILD=release RUNTIME_LIBS=dynamic
+	cd ..\..\..
+
+clean:
+	cd project\librets\src
+	$(NMAKE) /f Makefile.vc clean
+	cd ..\..\..
+	cd project\examples\src
+	$(NMAKE) /f Makefile.vc clean
+	cd ..\..\..
+	cd project\librets\test\src
+	$(NMAKE) /f Makefile.vc clean
+	cd ..\..\..\..
+	cd project\swig
+	-$(NMAKE) /f Makefile.vc clean
+	cd ..\..
+	@-rmdir /q  /s build 2>NUL
+	@-rmdir /q  /s dist 2>NUL
+
+test:
+	$(NMAKE) /f Makefile.vc BUILD=release RUNTIME_LIBS=dynamic _test
+
+_test:
+	cd project\librets\test\src
+	$(NMAKE) /f Makefile.vc BUILD=release RUNTIME_LIBS=dynamic
+	cd ..\..\..\..
+	project\librets\test\src\$(DIROBJ)\test.exe
+
+DIST_BASE = librets-$(VERSION)
+DISTDIR = build/$(DIST_BASE)
+DIST_ZIP = dist/librets-$(TARGET_CPU)-$(VERSION).zip
+DOXYGEN = "C:\Program Files (x86)\doxygen\bin\doxygen.exe"
+MKDIR_P = c:\cygwin\bin\mkdir.exe -p
+RUBY_DIST = 
+!if "X$(MINGW_SUPPORT)" != "X"
+RUBY_DIST = _dist_ruby
+!endif
+PERL_DIST =
+!if "$(VS_VERSION)" == "vs2008" || "$(VS_VERSION)" == "vs2010"
+PERL_DIST = _dist-perl
+!endif
+RSYNC = rsync -a --exclude-from project/build/dist-win-exclude
+
+prepare:
+	@if not exist build\doc\api mkdir build\doc\api
+	@if not exist dist mkdir dist
+	@$(MKDIR_P) $(DISTDIR)
+	@$(MKDIR_P) $(DISTDIR)/doc/api
+	@$(MKDIR_P) $(DISTDIR)/lib
+	@$(MKDIR_P) $(DISTDIR)/dotnet
+	@$(MKDIR_P) $(DISTDIR)/java
+	@$(MKDIR_P) $(DISTDIR)/ruby
+	@$(MKDIR_P) $(DISTDIR)/python
+	@$(MKDIR_P) $(DISTDIR)/php5
+	@$(MKDIR_P) $(DISTDIR)/perl
+	@if not exist $(MSVCP_DLL) echo $(MSVCP_DLL) can not be found. 
+	@if not exist $(MSVCP_DLL) echo Make sure the $$VCTOOLS variable is set.
+	@if not exist $(MSVCP_DLL) echo If you are running VS2003, you must manual build the
+	@if not exist $(MSVCP_DLL) echo MSVCP71.DLL for redistribution. (Rename sample_p.dll to
+	@if not exist $(MSVCP_DLL) echo MSVCP71.DLL). See: 
+	@if not exist $(MSVCP_DLL) echo http://msdn.microsoft.com/en-us/library/k0a8ehy3(VS.71).aspx
+	@if not exist $(MSVCP_DLL) exit 1
+        @$(NMAKE) /f Makefile.vc BUILD=release RUNTIME_LIBS=dynamic _librets-config
+
+docs: prepare
+	rm -rf build/doc/api
+	cp project\build\Doxyfile.in project\build\Doxyfile
+	echo PROJECT_NUMBER=$(VERSION) >> project\build\Doxyfile
+        echo OUTPUT_DIRECTORY=build/doc/api >> project\build\Doxyfile
+	$(DOXYGEN) project\build\Doxyfile
+
+swig:
+	cd project\swig
+	$(NMAKE) /f Makefile.vc
+	cd ..\..
+
+lib-all-variants: lib-debug-dynamic lib-debug-static lib-release-dynamic lib-release-static lib-release-dynamic-ts lib-release-static-ts
+	cd project\librets\src
+#	$(NMAKE) /f Makefile.vc BUILD=release RUNTIME_LIBS=dll
+        cd ..\..\..
+	cd project\swig
+	$(NMAKE) /f Makefile.vc 
+	cd ..\..
+
+lib-debug-dynamic:
+	cd project\librets\src
+	$(NMAKE) /f Makefile.vc BUILD=debug RUNTIME_LIBS=dynamic 
+        cd ..\..\..
+
+lib-debug-static:
+	cd project\librets\src
+	$(NMAKE) /f Makefile.vc BUILD=debug RUNTIME_LIBS=static
+        cd ..\..\..
+
+lib-release-dynamic:
+	cd project\librets\src
+	$(NMAKE) /f Makefile.vc BUILD=release RUNTIME_LIBS=dynamic 
+        cd ..\..\..
+
+lib-release-static:
+	cd project\librets\src
+	$(NMAKE) /f Makefile.vc BUILD=release RUNTIME_LIBS=static
+        cd ..\..\..
+
+lib-release-dynamic-ts:
+	cd project\librets\src
+	$(NMAKE) /f Makefile.vc BUILD=release RUNTIME_LIBS=dynamic LIBRETS_THREADS=/DLIBRETS_THREAD_SAFE
+        cd ..\..\..
+
+lib-release-static-ts:
+	cd project\librets\src
+	$(NMAKE) /f Makefile.vc BUILD=release RUNTIME_LIBS=static LIBRETS_THREADS=/DLIBRETS_THREAD_SAFE
+        cd ..\..\..
+
+dist: docs lib-all-variants _dist
+
+_dist: _dist-prepare _dist-cpp _dist-csharp _dist-java _dist-python _dist-python3 _dist-php5 $(PERL_DIST)  $(RUBY_DIST)
+	rm -f $(DIST_ZIP)
+	cd build
+	zip -rq ../$(DIST_ZIP) $(DIST_BASE)
+	cd ..
+
+_dist-prepare:
+	$(RSYNC) --delete build/doc/api/html $(DISTDIR)/doc/api
+	$(RSYNC) --delete project/librets/include $(DISTDIR)
+
+_dist-cpp:
+	cp -u project/librets/src/$(BUILD_DIR)/*.lib $(DISTDIR)/lib
+
+_dist-csharp:
+	cp -u project/swig/csharp/$(BUILD_DIR)/bin/*.dll $(DISTDIR)/dotnet
+	cp -u project/swig/csharp/$(BUILD_DIR)/bin/Metadata.exe $(DISTDIR)/dotnet
+	cp -u project/swig/csharp/$(BUILD_DIR)/bin/Search.exe $(DISTDIR)/dotnet
+	cp -u project/swig/csharp/$(BUILD_DIR)/bin/RawSearch.exe $(DISTDIR)/dotnet
+	cp -u project/swig/csharp/$(BUILD_DIR)/bin/Update.exe $(DISTDIR)/dotnet
+
+_dist-java:
+	cp -u project/swig/java/$(BUILD_DIR)/bin/*.jar $(DISTDIR)/java
+	cp -u project/swig/java/$(BUILD_DIR)/bin/*.dll $(DISTDIR)/java
+	cp -u project/swig/java/$(BUILD_DIR)/bin/*.jar $(DISTDIR)/java
+
+_dist-ruby:
+	cp -u project/swig/ruby/*.so $(DISTDIR)/ruby
+	cp -u project/swig/ruby/librets.rb $(DISTDIR)/ruby
+	cp -u $(MSVCP_DLL) $(DISTDIR)/ruby/
+	if exist $(MSVCR_DLL) cp -u $(MSVCR_DLL) $(DISTDIR)/ruby/
+
+_dist-python:
+	cp -u project/swig/python/dist/*.exe $(DISTDIR)/python
+
+_dist-python3:
+	cp -u project/swig/python3/dist/*.exe $(DISTDIR)/python
+
+_dist-php5:
+	cp -u project/swig/php5/$(BUILD_DIR)/librets.php $(DISTDIR)/php5
+	cp -u project/swig/php5/$(BUILD_DIR)/librets.dll $(DISTDIR)/php5
+
+_dist-perl:
+	cp -u project/swig/perl/librets.pm $(DISTDIR)/perl
+	chmod -R +rwx project/swig/perl/blib
+	$(RSYNC) project/swig/perl/blib/arch/auto/librets/ $(DISTDIR)/perl
+	@echo Place librets.pm into your site/lib directory > $(DISTDIR)/perl/README
+	@echo Create the directory site/lib/auto/librets >> $(DISTDIR)/perl/README
+	@echo and place the other files there. >> $(DISTDIR)/perl/README
+
+_librets-config:
+        @cat librets-config.in | sed \
+                -e "s,@LIBRETS_CFLAGS@,$(CFLAGS_STD)," \
+                -e "s,@libdir@,$(LIBRETS_LIB_NAME)," \
+                -e "s,@VERSION@,$(VERSION)," \
+                -e "s,@HEX_VERSION@, $(HEX_VERSION)," \
+                > librets-config-win

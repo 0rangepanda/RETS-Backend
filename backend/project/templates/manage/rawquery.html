@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block content %}
+<div class="container">
+  <h2>Query</h2>
+  <form action="/manage/rawquery" method="GET">
+    {% if res %}
+    <p> Raw SQL <input type="text" name="sql" size="50" value={{res.query}}/> </p>
+      {% else %}
+      <p> Raw SQL <input type="text" name="sql" size="50"/> </p>
+        {% endif %}
+        <input type="submit" value="search" />
+    </form>
+
+        {% if res %}
+        <hr>
+        <h2>Results</h2>
+        <p>The SQL that was executed: {{res.query}}</p>
+        <p>Total number of results: {{res.count}}</p>
+
+        {% if res.count>0 %}
+        <p>
+          <table border="1">
+            <tr>
+              {% for colname in res.colnames %}
+              <th>{{colname}}</th>
+              {% endfor %}
+            </tr>
+            {% for result in res.results %}
+            <tr>
+              {% for elem in result %}
+              <td> {{elem}} </td>
+              {% endfor %}
+            </tr>
+            {% endfor %}
+          </table>
+        </p>
+        {% endif %}
+
+        {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,52 @@
+!include <../../../build/Makefile.vc>
+
+LIBRETS_PATH = ../..
+
+LIBRETS_LIB = $(LIBRETS_PATH)/src/$(BUILD_DIR)/$(LIBRETS_LIB_NAME)
+LIBRETS_CFLAGS = /I$(LIBRETS_PATH)/include
+
+########################################################################
+#
+
+TARGET  = $(DIROBJ)\test.exe
+CFLAGS  = $(CFLAGS_STD) $(LIBRETS_CFLAGS) $(BOOST_CFLAGS) $(EXPAT_CFLAGS)\
+	 $(CPPUNIT_CFLAGS)
+LDFLAGS = $(LDFLAGS_STD) $(LIBRETS_LIB) $(CPPUNIT_LDFLAGS)
+
+LINK    = $(LINK_EXE) $(LDFLAGS) 
+
+########################################################################
+#
+
+all: $(TARGET)
+
+# Use this to regenerate objects.vc
+win_files:
+	perl ../../../build/win_files.pl X_OBJS '*.cpp' '(.*)\.cpp$$' '\$$(DIROBJ)\\\$$1.obj' > objects.vc
+
+!include <objects.vc>
+
+$(TARGET): $(X_OBJS) $(LIBRETS_LIB)
+	$(LINK) /out:$(TARGET) $(X_OBJS) $(WINLIBS)
+
+$(X_OBJS): $(DIROBJ)
+
+$(BUILD_DIR):
+	@if not exist "$(BUILD_DIR)" mkdir $(BUILD_DIR)
+
+$(DIROBJ): $(BUILD_DIR)
+	@if not exist "$(DIROBJ)" mkdir $(DIROBJ)
+
+clean:
+	@-rmdir /q /s $(BUILD_DIR) 2> NUL
+	@-erase /s vc*.pch 2> NUL
+	@-erase /s vc*.idb 2> NUL
+	@-erase /s vc*.pdb 2> NUL
+
+.SUFFIXES: .c .cpp .obj .res
+
+{.\}.c{$(DIROBJ)\}.obj:
+	$(CC) $(CFLAGS) /Fo"$@"  $<
+
+{.\}.cpp{$(DIROBJ)\}.obj:
+	$(CXX) $(CFLAGS) /Fo"$@"  $<

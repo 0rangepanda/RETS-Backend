@@ -1,0 +1,134 @@
+#! /bin/sh
+#
+# The idea to this kind of setup info script was stolen from numerous
+# other packages, such as neon, libxml and gnome.
+#
+
+basedir=@abs_top_builddir@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+includedir=@includedir@
+libdir=@libdir@
+librets_cflags="@LIBRETS_CFLAGS@"
+librets_ldflags="@LIBRETS_LDFLAGS@"
+sql="@USE_SQL_COMPILER@"
+swig="@USE_SWIG_BINDINGS@"
+
+usage()
+{
+    cat <<EOF
+Usage: librets-config [OPTION]
+
+Available values for OPTION include:
+
+  --basedir   project base directory
+  --cflags    pre-processor and compiler flags
+  --help      display this help and exit
+  --libs      library linking information
+  --version   output version information
+  --vernum    output the version informatin as a number (hexadecimal)
+  --sql       returns true if sql compiler included
+  --swig      returns true if swig languages included
+EOF
+
+    exit $1
+}
+
+output=""
+output_separator=""
+
+append_to_output()
+{
+    output="${output}${output_separator}${1}"
+    output_separator=" "
+}
+
+if test $# -eq 0; then
+    usage 1
+fi
+
+while test $# -gt 0; do
+    case "$1" in
+    # this deals with options in the style
+    # --option=value and extracts the value part
+    # [not currently used]
+    -*=*) value=`echo "$1" | sed 's/[-_a-zA-Z0-9]*=//'` ;;
+    *) value= ;;
+    esac
+
+    case "$1" in
+        --version)
+	    echo @VERSION@
+	    exit 0
+	    ;;
+
+        --vernum)
+	    echo @HEX_VERSION@
+	    exit 0
+	    ;;
+
+        --help)
+	    usage 0
+	    ;;
+
+	--basedir)
+	    show_basedir="yes"
+	    ;;
+
+        --cflags)
+	    show_cflags="yes"
+       	    ;;
+
+        --libs)
+            show_libs="yes"
+       	    ;;
+
+	--sql)
+	    show_sql="yes"
+	    ;;
+
+	--swig)
+	    show_swig="yes"
+	    ;;
+
+        *)
+            echo "unknown option: $1"
+	    usage 1
+	    ;;
+    esac
+    shift
+done
+
+if test "$show_basedir" = "yes"; then
+    append_to_output ${basedir}
+fi
+
+if test "$show_cflags" = "yes"; then
+    append_to_output -I${includedir}
+    append_to_output "$librets_cflags"
+fi
+
+if test "$show_libs" = "yes"; then
+    append_to_output ${libdir}/librets.a
+    append_to_output "$librets_ldflags"
+fi
+
+if test "$show_sql" = "yes"; then
+    if [ "$sql" = "1" ]; then
+	append_to_output "true"
+    else
+	append_to_output "false"
+    fi
+fi
+
+if test "$show_swig" = "yes"; then
+    if [ "$swig" = "1" ]; then
+	append_to_output "true"
+    else
+	append_to_output "false"
+    fi
+fi
+
+echo $output
+
+exit 0

@@ -1,0 +1,21 @@
+{
+  'targets': [
+    {
+      'target_name': 'librets',
+      'sources': [ 'librets_wrap.cpp' ],
+      'product_prefix': 'lib',
+      'include_dirs': [ '@abs_top_srcdir@/project/librets/include', '@BOOST_INCLUDE_DIR@' ],
+      'libraries': [ '@abs_top_srcdir@/build/librets/lib/librets.a', '@LIBRETS_LDFLAGS@'],
+      'cflags!': [ '-fno-exceptions' ],
+      'cflags_cc!': [ '-fno-exceptions' ],
+       'conditions': [
+         ['OS=="mac"', {
+       	    'xcode_settings': {
+            'GCC_ENABLE_CPP_EXCEPTIONS': 'YES',
+	    'MACOSX_DEPLOYMENT_TARGET': '10.9'
+          }
+        }]
+      ]
+    }
+  ]
+}

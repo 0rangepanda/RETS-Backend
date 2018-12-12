@@ -1,0 +1,126 @@
+!include <../../build/Makefile.vc>
+
+##############################################################
+
+LIB_NAME = $(LIB_PREFIX)rets$(LIB_RUNTIME)$(LIB_DEBUG_RUNTIME).$(LIB_EXT)
+LIB_NAME = $(LIBRETS_LIB_NAME)
+
+ANTLR_DIR = $(DIROBJ)\antlr
+
+TARGET 	= $(BUILD_DIR)\$(LIB_NAME)
+CFLAGS  = $(CFLAGS_STD) /I../include /DLIBRETS_VERSION=\"$(VERSION)\" \
+	/I$(ANTLR_DIR) $(BOOST_CFLAGS) /DBOOST_ALL_NO_LIB $(CURL_CFLAGS) \
+	$(EXPAT_CFLAGS) $(ANTLR_CFLAGS) $(LIBRETS_THREADS)
+LDFLAGS = $(LDFLAGS_STD) $(BOOST_LDFLAGS) \
+	$(CURL_LDFLAGS) $(OPENSSL_LDFLAGS) $(EXPAT_LDFLAGS) $(ANTLR_LDFLAGS)
+
+########################################################################
+#
+
+!if "$(USE_SQL_COMPILER)" == "true"
+ANTLR_SRCS = \
+	$(ANTLR_DIR)\RetsSqlLexer.hpp \
+	$(ANTLR_DIR)\RetsSqlLexer.cpp \
+	$(ANTLR_DIR)\RetsSqlParser.hpp \
+	$(ANTLR_DIR)\RetsSqlParser.cpp \
+	$(ANTLR_DIR)\DmqlTreeParser.hpp \
+	$(ANTLR_DIR)\DmqlTreeParser.cpp \
+	$(ANTLR_DIR)\GetObjectTreeParser.hpp \
+	$(ANTLR_DIR)\GetObjectTreeParser.cpp \
+	$(ANTLR_DIR)\LookupColumnsTreeParser.hpp \
+	$(ANTLR_DIR)\LookupColumnsTreeParser.cpp \
+	$(ANTLR_DIR)\LookupTreeParser.hpp \
+	$(ANTLR_DIR)\LookupTreeParser.cpp
+
+
+ANTLR_TRIGGER = $(ANTLR_DIR)\antlr.txt
+
+ANTLR_OBJS = \
+	$(DIROBJ)\RetsSqlLexer.obj \
+	$(DIROBJ)\RetsSqlParser.obj \
+	$(DIROBJ)\DmqlTreeParser.obj \
+	$(DIROBJ)\GetObjectTreeParser.obj \
+	$(DIROBJ)\LookupColumnsTreeParser.obj \
+	$(DIROBJ)\LookupTreeParser.obj
+
+SQL_DIR = ..\sql
+
+SQL_SRCS = \
+	$(SQL_DIR)\RetsAST.cpp \
+	$(SQL_DIR)\RetsSqlException.cpp \
+	$(SQL_DIR)\SqlToDmqlCompiler.cpp
+
+SQL_OBJS = \
+	$(DIROBJ)\RetsAST.obj \
+	$(DIROBJ)\RetsSqlException.obj \
+	$(DIROBJ)\SqlToDmqlCompiler.obj
+
+!endif
+
+all: $(TARGET)
+
+# Use this to regenerate objects.vc
+win_files:
+	perl ../../build/win_files.pl X_OBJS '*.cpp' '(.*)\.cpp$$' '\$$(DIROBJ)\\\$$1.obj' > objects.vc
+
+!include <objects.vc>
+
+!if "$(USE_SQL_COMPILER)" == "true"
+X_OBJS = $(ANTLR_OBJS) $(SQL_OBJS) $(X_OBJS)
+!else
+X_OBJS = $(X_OBJS)
+!endif
+
+$(TARGET): $(X_OBJS)
+	$(LINK_LIB) /out:$(TARGET) $(LINK_STD) $(LDFLAGS) $(X_OBJS)
+	@-erase /s vc*.pch 2> NUL
+	@-erase /s vc*.idb 2> NUL
+	@-erase /s vc*.pdb 2> NUL
+
+$(X_OBJS): $(DIROBJ)
+
+!if "$(USE_SQL_COMPILER)" == "true"
+$(ANTLR_OBJS): $(ANTLR_SRCS)
+
+$(ANTLR_SRCS): $(ANTLR_TRIGGER)
+
+$(ANTLR_TRIGGER): rets-sql.g dmql-tree.g get-object-tree.g $(ANTLR_DIR)
+	$(ANTLR) -o $(ANTLR_DIR) rets-sql.g
+	$(ANTLR) -o $(ANTLR_DIR) -glib rets-sql.g dmql-tree.g
+	$(ANTLR) -o $(ANTLR_DIR) -glib rets-sql.g get-object-tree.g
+	$(ANTLR) -o $(ANTLR_DIR) -glib rets-sql.g lookup-tree.g
+	$(ANTLR) -o $(ANTLR_DIR) -glib rets-sql.g lookup-columns-tree.g
+	@echo "ANTLR Trigger" > $(ANTLR_TRIGGER)
+
+
+$(SQL_OBJS): $(SQL_SRCS)
+!endif
+
+$(BUILD_DIR):
+	@if not exist "$(BUILD_DIR)" mkdir $(BUILD_DIR)
+
+$(DIROBJ): $(BUILD_DIR)
+	@if not exist "$(DIROBJ)" mkdir $(DIROBJ)
+
+$(ANTLR_DIR): $(DIROBJ)
+	@if not exist "$(ANTLR_DIR)" mkdir $(ANTLR_DIR)
+
+clean:
+	@-rmdir /q /s $(BUILD_DIR) 2> NUL
+	@-erase /s vc*.pch 2> NUL
+	@-erase /s vc*.idb 2> NUL
+	@-erase /s vc*.pdb 2> NUL
+
+.SUFFIXES: .c .cpp .obj .res
+
+{.\}.c{$(DIROBJ)\}.obj:
+	$(CC) $(CFLAGS) /Fd"$(BUILD_DIR)\\" /Fo"$@" $<
+
+{.\}.cpp{$(DIROBJ)\}.obj:
+	$(CXX) $(CFLAGS) /Fd"$(BUILD_DIR)\\" /Fo"$@" $<
+
+{$(ANTLR_DIR)\}.cpp{$(DIROBJ)\}.obj:
+	$(CXX) $(CFLAGS) /Fd"$(BUILD_DIR)\\" /Fo"$@"  $<
+
+{$(SQL_DIR)\}.cpp{$(DIROBJ)\}.obj:
+	$(CXX) $(CFLAGS) /Fd"$(BUILD_DIR)\\" /Fo"$@" $<
