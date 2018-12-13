@@ -50,12 +50,24 @@ class City(db.Model):
 class Property(db.Model):
     """
     Properties data
-    *NOTE: If change schema, change the related config file as well
+    * NOTE: If change schema, change the related config file as well
     """
     __tablename__ = "properties"
     __banlist__ = ['id', '_sa_instance_state']
+    __default__ = {
+        "Numeric" : -1.00,
+        "Int" : -1,
+        "String" : "",
+    }
+    __default_val__ = {
+        type(Decimal('-1.00')) : -1.00,
+        type(-1.00) : -1.00,
+        type(-1) : -1,
+        type("") : "",
+    }
 
     # the var name would be the Column name in db
+    # NOTE: neg values meaning not known
     id = db.Column(db.Integer, primary_key=True)
     mlsname = db.Column(db.String, nullable=False) # e.g: CRMLS
 
@@ -63,27 +75,26 @@ class Property(db.Model):
     listing_id = db.Column(db.String, nullable=False)
     status = db.Column(db.String, nullable=False)
     list_price = db.Column(db.Numeric(16,2), nullable=False) # money
-    close_price = db.Column(db.Numeric(16,2), nullable=True) # money
-    original_price = db.Column(db.Numeric(16,2), nullable=True) # money
-    prev_price = db.Column(db.Numeric(16,2), nullable=True) # money
-    low_price = db.Column(db.Numeric(16,2), nullable=True) # money
 
-    city = db.Column(db.String, nullable=True)
-    streetname = db.Column(db.String, nullable=True)
-    postalcode = db.Column(db.String, nullable=True)
-    postalcodep4 = db.Column(db.String, nullable=True)
-    beds = db.Column(db.SmallInteger, nullable=True)
-    baths = db.Column(db.SmallInteger, nullable=True)
-    yearbuilt = db.Column(db.SmallInteger, nullable=True)
-    stories = db.Column(db.SmallInteger, nullable=True)
+    close_price = db.Column(db.Numeric(16,2), nullable=True, default=__default__["Numeric"]) # money
+    original_price = db.Column(db.Numeric(16,2), nullable=True, default=__default__["Numeric"]) # money
+    prev_price = db.Column(db.Numeric(16,2), nullable=True, default=__default__["Numeric"]) # money
+    low_price = db.Column(db.Numeric(16,2), nullable=True, default=__default__["Numeric"]) # money
 
-    squarefeet = db.Column(db.Numeric(16,2), nullable=True, default=0.00)
-    pricepersquare = db.Column(db.Numeric(8,2), nullable=True)
-    acres = db.Column(db.Numeric(18,2), nullable=True)
+    city = db.Column(db.String, nullable=True, default=__default__["String"])
+    streetname = db.Column(db.String, nullable=True, default=__default__["String"])
+    postalcode = db.Column(db.String, nullable=True, default=__default__["String"])
+    postalcodep4 = db.Column(db.String, nullable=True, default=__default__["String"])
     
+    beds = db.Column(db.SmallInteger, nullable=True, default=__default__["Int"])
+    baths = db.Column(db.SmallInteger, nullable=True, default=__default__["Int"])
+    yearbuilt = db.Column(db.SmallInteger, nullable=True, default=__default__["Int"])
+    stories = db.Column(db.SmallInteger, nullable=True, default=__default__["Int"])
 
-
-
+    squarefeet = db.Column(db.Numeric(16,2), nullable=True, default=__default__["Numeric"])
+    pricepersquare = db.Column(db.Numeric(8,2), nullable=True, default=__default__["Numeric"])
+    acres = db.Column(db.Numeric(16,4), nullable=True, default=__default__["Numeric"])
+    
     def __init__(self, **kwargs):
         """
         NOTE: the super().__init__(**kwargs) do the same thing as the code
@@ -101,11 +112,11 @@ class Property(db.Model):
     def __repr__(self):
        return '<Listingkey: %s>' % self.listingkey_numeric
 
-
     def diff(self, kwargs):
         """
         Check if the kwargs data is the same as the property instance
         for each val in return, [0] is the old val, [1] is the new val
+        NOTE: this function changes NOTHING
         :param kwargs: dict
         :return: dict
         """
@@ -115,15 +126,16 @@ class Property(db.Model):
             if key[0]=='_' or key in self.__banlist__:
                 continue
             # if kwargs[key] is empty, val will be stored as None
-            if val is None:
-                if kwargs[key]: # prev val is None and new kwargs[key] is not None
+            # val won't be None, know default val by self.__default__
+            # kwargs[key] can be None, if None, compare to the default val
+            if kwargs[key] is None:
+                if val != self.__default_val__[type(val)]:
+                # if val not in self.__default__.values(): # ugly but works
                     res[key] = [val, kwargs[key]]
             else:
                 if val != type(val)(kwargs[key]):
                     res[key] = [val, kwargs[key]]
         return res
-
-
 
     def to_dict(self):
         """
@@ -139,7 +151,6 @@ class Property(db.Model):
                 data[key] = val
         return data
 
-
     def from_dict(self, data):
         """
         Update data from a dict
@@ -147,16 +158,19 @@ class Property(db.Model):
         :return:
         """
         flag = False
+        var_dict = deepcopy(self.__dict__ ) # original data
         for key, val in data.items():
             if key in self.__banlist__:
                 continue
             elif key in self.__dict__:
-                setattr(self, key, data[key])
+                if val is None:
+                    # should set to default value
+                    defaultval = self.__default_val__[type(var_dict[key])]
+                    setattr(self, key, defaultval)
+                else:
+                    setattr(self, key, val)
                 flag = True
-
         return flag
-
-
 
     def getallcolum(self):
         members = [attr for attr in dir(self)
@@ -179,6 +193,8 @@ class User(UserMixin, db.Model):
     token = db.Column(db.String(32), index=True, unique=True)
     token_expiration = db.Column(db.DateTime)
     last_message_read_time = db.Column(db.DateTime)
+
+    # TODO: set authen level
 
     def __repr__(self):
         return '<User {}>'.format(self.username)

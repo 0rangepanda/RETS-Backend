@@ -35,6 +35,7 @@ class CrmlsHandler(object):
         self.USR_PSWD = self.config['Authentication']['USR_PSWD']
         self.SelectField = self.config['SelectField']
         self.ExtraField = self.config['ExtraField']
+        self.NotNullableField = self.config['NotNullableField']
 
         self.status = {}
         for k, v in self.config['Status'].items():
@@ -119,7 +120,7 @@ class CrmlsHandler(object):
         for key in field:
             streetname.append(results.GetString(key))
         streetname = " ".join(streetname)
-        return " ".join(streetname)
+        return streetname
 
 
     # public functions
@@ -185,18 +186,28 @@ class CrmlsHandler(object):
         results = self.__query(session, querystr, select)
 
         # for each record, check hash then decide if need to update
-        create_count, update_count = 0, 0
+        create_count, update_count, abandon_count = 0, 0, 0
         while results.HasNext():
+            abandon = False
             kwargs={}
-            # NOTE: HERE do extra thing to each record (like streetname!)
-            kwargs["mlsname"] = self.mlsname
             for key in self.SelectField:
                 kwargs[key]=results.GetString(self.SelectField[key])
+                # Avoid empty string here
                 if not kwargs[key]:
-                    kwargs[key] = None
-            # TODO: avoid empty column, but is there better solution?
+                    if key in self.NotNullableField:
+                        abandon = True # abandon this record
+                    else:
+                        kwargs[key] = None
+            if abandon:
+                abandon_count += 1
+                continue
+            # NOTE: HERE do extra thing to each record (like streetname!)
+            kwargs["mlsname"] = self.mlsname
+            kwargs["streetname"] = self.__streetname(results)
+    
 
             # compare
+            # TODO: can skip this step for frist time
             property_in_db = data_in_db.get(kwargs['listingkey_numeric'], None)
             if not property_in_db:
                 # new record -> create
@@ -216,7 +227,7 @@ class CrmlsHandler(object):
 
         self.database.session.commit()
         self.__logout(session)
-        return create_count, update_count
+        return create_count, update_count, abandon_count
 
 
     def update_all(self, col_name, value_list):
@@ -228,14 +239,16 @@ class CrmlsHandler(object):
         :return:
         """
         # we want one log for each updating
-        total_create, total_update = 0, 0
+        total_create, total_update, total_abandon = 0, 0, 0
         for value in value_list:
-            create_count, update_count = self.update_one(col_name, value)
+            create_count, update_count, abandon_count = self.update_one(col_name, value)
             total_create += create_count
             total_update += update_count
-            print("[%s] create: %s,  update: %s"
-                  % (value, create_count, update_count,))
-        print("Total create: %s,  update: %s" % (total_create, total_update,))
+            total_abandon += abandon_count
+            print("[%s] create: %s,  update: %s, abandon: %s"
+                  % (value, create_count, update_count, abandon_count, ))
+        print("Total create: %s,  update: %s, abandon: %s" 
+            % (total_create, total_update, total_abandon, ))
         return True
 
 

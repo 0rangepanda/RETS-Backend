@@ -80,6 +80,7 @@
       <p>Total number of results: {{res.count}}</p>
 
       {% if res.count>0 %}
+    
       <p>
         <table border="1">
           <!-- Header -->
@@ -102,10 +103,11 @@
           {% endfor %}
         </table>
       </p>
-      {% endif %}
 
       {% import "block.html" as blocks %}
       {{ blocks.pager( url_for(request.endpoint)+'?'+paging.url, paging.total, paging.page_size, paging.curr_page) }} 
+      {% endif %}
+
       
     
   {% endif %}

@@ -12,7 +12,7 @@ services:
       - FLASK_APP=run.py
       - FLASK_DEBUG=1
     volumes:
-      - ./web/backend:/home/flask/app/backend
+      - ./backend:/home/flask/app/backend
     command: /usr/local/bin/gunicorn -w 2 -b :8000 project:app
 
 #END

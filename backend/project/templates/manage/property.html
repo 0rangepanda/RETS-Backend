@@ -2,6 +2,7 @@
 
 {% block content %}
 
+<div class="container">
 <h2>Property</h2>
 <p>The SQL that was executed: {{res.query}}</p>
 <p>If it succeeded: {{res.success}}</p>
@@ -12,7 +13,7 @@
     <table border="1">
         <!-- Header -->
         <tr>
-        {% for colname in res.colnames %}
+        {% for colname in res.colnames[:10] %}
             <th>{{colname}}</th>
         {% endfor %}
         </tr>
@@ -20,12 +21,30 @@
         <!-- Content -->
         {% for result in res.results %}
         <tr>
-            {% for elem in result %}
+            {% for elem in result[:10] %}
             <td> {{elem}} </td>
             {% endfor %}
         </tr>
         {% endfor %}
     </table>    
+    <br>
+    <table border="1">
+        <!-- Header -->
+        <tr>
+        {% for colname in res.colnames[10:] %}
+            <th>{{colname}}</th>
+        {% endfor %}
+        </tr>
+            
+        <!-- Content -->
+        {% for result in res.results %}
+        <tr>
+            {% for elem in result[10:] %}
+            <td> {{elem}} </td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+        </table>    
     </p>
 {% endif %}
 
@@ -33,6 +52,6 @@
     {% for img in image.image_urls %}
         <p> <img src={{img}} />  </p>
     {% endfor %}
-
+</div>
 
 {% endblock %}

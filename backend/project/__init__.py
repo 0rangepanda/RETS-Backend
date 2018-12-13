@@ -26,7 +26,9 @@ bootstrap = Bootstrap(app)
 moment = Moment(app)
 babel = Babel(app)
 
-psydb = PsyHandler(app, hostname="postgres")
+psydb = PsyHandler(app, hostname="postgres") 
+# use hostname when using pgsql by docker and the two container are in the same docker network
+# psydb = PsyHandler(app) in production env
 
 # Crmls Handler
 # NOTE: CrmlsHandler uses the db schema, so must import after db create
