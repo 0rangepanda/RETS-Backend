@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container">
+<h2>Property</h2>
+<p>The SQL that was executed: {{res.query}}</p>
+<p>If it succeeded: {{res.success}}</p>
+<p>Total number of results: {{res.count}}</p>
+    
+{% if res.success == "True" %}
+    <p>
+    <table border="1">
+        <!-- Header -->
+        <tr>
+        {% for colname in res.colnames[:10] %}
+            <th>{{colname}}</th>
+        {% endfor %}
+        </tr>
+        
+        <!-- Content -->
+        {% for result in res.results %}
+        <tr>
+            {% for elem in result[:10] %}
+            <td> {{elem}} </td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+        <tr>
+            {% for elem in origin[:10] %}
+            <td> {{elem}} </td>
+            {% endfor %}
+        </tr>
+    </table>    
+    <br>
+    <table border="1">
+        <!-- Header -->
+        <tr>
+        {% for colname in res.colnames[10:] %}
+            <th>{{colname}}</th>
+        {% endfor %}
+        </tr>
+            
+        <!-- Content -->
+        {% for result in res.results %}
+        <tr>
+            {% for elem in result[10:] %}
+            <td> {{elem}} </td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+        <tr>
+            {% for elem in origin[10:] %}
+                <td> {{elem}} </td>
+            {% endfor %}
+        </tr>
+        </table>    
+    </p>
+{% endif %}
+
+
+{% endblock %}

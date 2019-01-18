@@ -1,10 +1,14 @@
+import os
 import librets
 import configparser
 import sqlite3
+import concurrent.futures
+import time
 from copy import deepcopy
 
 from project.models import Property
 from lib.utils.configcase import myconf
+from lib.utils.getimgsize import getimgsize
 
 
 class CrmlsHandler(object):
@@ -94,14 +98,12 @@ class CrmlsHandler(object):
             "Residential",
             querystr
         )
-
         request.SetStandardNames(True)
         request.SetOffset(librets.SearchRequest.OFFSET_NONE)
         request.SetSelect(SelectField)
         request.SetCountType(librets.SearchRequest.RECORD_COUNT_AND_RESULTS)
         if limit:
             request.SetLimit(limit)
-
         # perform search and save results to db
         results=session.Search(request)
         return results
@@ -122,14 +124,55 @@ class CrmlsHandler(object):
         streetname = " ".join(streetname)
         return streetname
 
+    def __misc(self, results):
+        """
+        Convert everything in self.Extrafield into a Json string
+        """
+        res = {}
+        for key in self.ExtraField:
+            res[key] = results.GetString(self.ExtraField[key])
+        return str(res)
 
+    ##
     # public functions
-    def getstatus(self):
+    def login(self):
+        return self.__login()
+
+    def query(self, querystr, limit=1, session=None):
+        """
+        A wrapper of self.__query()
+        """
+        if session==None:
+            fsession = self.__login()
+        else:
+            fsession = session
+        select = ",".join(self.SelectField.values()) + "," + ",".join(self.ExtraField.values())
+        results = self.__query(fsession, querystr, select, limit=limit)
+        res = []
+        while results.HasNext():
+            kwargs={} 
+            for key in self.SelectField:
+                kwargs[key]=results.GetString(self.SelectField[key])
+                if not kwargs[key]:
+                    kwargs[key] = ""
+            for key in self.ExtraField:
+                kwargs[key]=results.GetString(self.ExtraField[key])
+                if not kwargs[key]:
+                    kwargs[key] = ""
+            res.append(kwargs)
+        if session==None:
+            self.__logout(fsession)
+        return res
+
+    def getstatus(self, status=None):
         """
         Get the dict of all status (something like A : Active)
         :return: a dict
         """
-        return self.status
+        if status:
+            return self.status.get(status, None)
+        else:
+            return self.status
 
     def create_table(self, limit=1000):
         """
@@ -159,27 +202,28 @@ class CrmlsHandler(object):
         return True
 
 
-    def update_one(self, col_name, value):
+    def update_one(self, col_name, value, create=False):
         """
         Perform updating from MLS
             update only one column value a time
             query -> compare -> update
             [city] is a good choice
-
+            [listing_id] can be used to update single property
         :param col_name: a column name in local db
         :param value: a value of this column
+        :param create: true if first time (do not need to query)
         :return: number of updated records
         """
         # query from database and read into memory
         # TODO: use string of column name
         # NOTE: each value in data_in_db is a <class: 'Property'> object
-        query_properties = Property.query.filter_by(city=value).all()
+        query_properties = Property.query.filter_by(city=value).all() # NOTE: hardcode city here
         data_in_db = {}
         for p in query_properties:
             data_in_db[p.listingkey_numeric] = p
 
         # query from mls
-        querystr = "(%s=%s)" % (col_name, value, )
+        querystr = "(%s=%s)" % (col_name, value, ) # commonly col_name=city
         print(querystr)
         session = self.__login()
         select = ",".join(self.SelectField.values()) + "," + ",".join(self.ExtraField.values())
@@ -204,11 +248,11 @@ class CrmlsHandler(object):
             # NOTE: HERE do extra thing to each record (like streetname!)
             kwargs["mlsname"] = self.mlsname
             kwargs["streetname"] = self.__streetname(results)
+            kwargs["misc"] = self.__misc(results)
     
-
-            # compare
-            # TODO: can skip this step for frist time
-            property_in_db = data_in_db.get(kwargs['listingkey_numeric'], None)
+            # compare and update
+            # skip this step for frist time
+            property_in_db = data_in_db.get(kwargs['listingkey_numeric'], None) if create==False else None
             if not property_in_db:
                 # new record -> create
                 prty = Property(**kwargs)
@@ -217,31 +261,30 @@ class CrmlsHandler(object):
             else:
                 # existing record 
                 # NOTE: can get diff list now
-                # TODO: update and logging
+                # TODO: logging
                 update_list = property_in_db.diff(kwargs)
                 if update_list:
                     # diff record -> update
                     property_in_db.from_dict(kwargs)
                     update_count += 1
-                    print(update_list) # this line goes to logging
-
+                    print(kwargs['listing_id'], update_list) # this line goes to logging
         self.database.session.commit()
         self.__logout(session)
         return create_count, update_count, abandon_count
 
 
-    def update_all(self, col_name, value_list):
+    def update_all(self, col_name, value_list, create=False):
         """
         Driver function of update_one
         Open a in-memory db for each updating
         :param col_name:
         :param value_list:
-        :return:
+        :return: if success
         """
         # we want one log for each updating
         total_create, total_update, total_abandon = 0, 0, 0
         for value in value_list:
-            create_count, update_count, abandon_count = self.update_one(col_name, value)
+            create_count, update_count, abandon_count = self.update_one(col_name, value, create=create)
             total_create += create_count
             total_update += update_count
             total_abandon += abandon_count
@@ -251,39 +294,115 @@ class CrmlsHandler(object):
             % (total_create, total_update, total_abandon, ))
         return True
 
+    def update_all_mt(self, col_name, value_list, threads=1, create=False):
+        """
+        Multithread Driver function of update_one
+        :param col_name:
+        :param value_list:
+        :return: if success
+        """
+        with concurrent.futures.ThreadPoolExecutor(max_workers=threads) as executor:
+            future_updateone = {executor.submit(self.update_one, col_name, val): val for val in value_list}
+            for future in concurrent.futures.as_completed(future_updateone):
+                val = future_updateone[future]
+                create_count, update_count, abandon_count = future.result()
+                print("[%s] create: %s,  update: %s, abandon: %s" 
+                      % (val, create_count, update_count, abandon_count, ))
+        return True
 
-    def get_image(self, ListingId):
+    ##
+    # Image related
+    def get_image(self, listingkey_numeric):
         """
         Given a ListingId, get all image URLS of the property from crmls
         :param ListingId:
         :return: image counts and all urls list
         """
-        image_urls = []
+        image_urls, media_types = [], []
         image_count = 0
         # query from mls
-        querystr = "(ListingId=%s)" % (ListingId,)
         session = self.__login()
-        results = self.__query(session, querystr, "ListingKeyNumeric")
+        pk = listingkey_numeric
+        photo_request = session.CreateSearchRequest(
+            "Media", "Media", "(ResourceRecordKeyNumeric=" + pk + ")"
+        )
+        photo_results = session.Search(photo_request)
+        image_count = photo_results.GetCount()
+        #photo_columns = photo_results.GetColumns()
+        #print("images count: " + str(photo_results.GetCount()))
+        while photo_results.HasNext():
+            url = photo_results.GetString("MediaURL")
+            mediatype = photo_results.GetString("MediaType")
+            image_urls.append(url)
+            media_types.append(mediatype)
+        self.__logout(session)
+        return {"image_count": image_count,
+                "image_urls": image_urls,
+                "media_types": media_types}
 
-        # fetching image (for crmls)
-        while results.HasNext():
-            pk = results.GetString("ListingKeyNumeric")
+    
+    # Update one property image AFTER self.get_image() is called
+    def update_image(self, listingkey_numeric, image):
+        """
+        Update one property image AFTER self.get_image() is called
+        :param listingkey_numeric: 
+        :param image_urls: a list of image urls
+        """
+        image_urls = image["image_urls"]
+        media_types = image["media_types"]
+        p = Property.query.filter_by(listingkey_numeric=listingkey_numeric).first()
+        if not p or len(media_types)==0 or len(image_urls)==0:
+            return False
+        img, cover = [], ""
+        for url, t in zip(image_urls, media_types) :
+            img.append({"url":url, "type":t})
+            if t=='IMAGE' and cover=="":
+                cover = str(url)
+            """
+            # get size of each img, turn this off to make it faster
+            if t=='IMAGE':
+                imgsize = getimgsize(url)
+                img.append({"url":url, "type":t, "width":imgsize[0], "height":imgsize[1]})
+            """ 
+        p.coverimage = cover
+        p.image = str(img)
+        self.database.session.commit()
+        return True
+
+    # Too slow, try not to use these two
+    def __update_image(self, query_properties_list):
+        """
+        Update the image field for a list of Property obj
+        :param query_properties_list: a list of Property obj
+        """
+        session = self.__login()
+        for p in query_properties_list:
+            image_urls = []
+            image_count = 0
             photo_request = session.CreateSearchRequest(
-                "Media", "Media", "(ResourceRecordKeyNumeric=" + pk + ")"
+                "Media", "Media", "(ResourceRecordKeyNumeric=" + p.listingkey_numeric + ")"
             )
             photo_results = session.Search(photo_request)
             image_count = photo_results.GetCount()
-            #photo_columns = photo_results.GetColumns()
-            #print("images count: " + str(photo_results.GetCount()))
             while photo_results.HasNext():
-                print("MediaURL: ", photo_results.GetString("MediaURL"))
-                image_urls.append(photo_results.GetString("MediaURL"))
-
+                url = photo_results.GetString("MediaURL")
+                image_urls.append(url)
+            if image_count>0:
+                p.coverimage = str(image_urls[0])
         self.__logout(session)
-        return {"image_count": image_count,
-                "image_urls": image_urls}
+        return None
 
-
+    
+    def update_allimage(self, col_name, value_list):
+        """
+        After init data, update the image field for all properties
+        """
+        if col_name=="city":
+            for value in value_list:
+                query_properties = Property.query.filter_by(city=value).all()
+                self.__update_image(query_properties)
+        self.database.session.commit()
+        return None
 
 
 ##

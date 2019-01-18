@@ -74,7 +74,7 @@ def search():
         if not page_size:
             page_size = 20
     
-        res = psydb.query_plus(select_list, "properties", request.args, request.args["orderby"], page_size, page_num)
+        res = psydb.query_property(select_list, request.args, request.args["orderby"], page_size, page_num)
         paging = {
             "url": __paging_url(request.args),
             "total": int(res["count"]), 
@@ -91,9 +91,26 @@ def propertyinfo(id):
     """
     View of single property
     """
+    # query from db
     res = psydb.query({"id": id}, "properties")
-    image = crmhandler.get_image(res["results"][0][3])
+    image = crmhandler.get_image(res["results"][0][2])
     return render_template('manage/property.html', res=res, image=image)
+
+@bp.route('/property_origin/<int:id>')
+def propertyinfo_origin(id):
+    """
+    View of single property
+    """
+    # query from db
+    res = psydb.query({"id": id}, "properties")
+    # query from mls
+    listing_id = res["results"][0][3]
+    origin_data = crmhandler.query("(ListingID=%s)" % (listing_id, ), limit=1)
+    origin = []
+    for colname in res["colnames"]:
+        origin.append(origin_data[0].get(colname,'Null'))
+    # TODO: also show the data query direct from mls
+    return render_template('manage/property_origin.html', res=res, origin=origin)
 
 
 @bp.route('/dbinfo', methods=['GET'])
@@ -106,21 +123,18 @@ def databaseInfo():
     return render_template('manage/search.html')
 
 
-@bp.route('/cityshortname', methods=['GET'])
+@bp.route('/cityquery', methods=['GET'])
 @login_required
-def cityshortname():
+def cityquery():
     """
     Lookup city full name by shortname (CRMLS for now)
     :return:
     """
-    pass
-    """
     if any(request.args[item] for item in request.args):
-        res = psydb.query(request.args, "properties")
+        res = psydb.query(request.args, "citys")
         return render_template('manage/city.html', res=res)
     else:
         return render_template('manage/city.html')
-    """
 
 
 @bp.route('/imageurl', methods=['GET'])

@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+  <script>
+  
+  </script>
+
+  <h2>City Name Query</h2>
+  <form action="/manage/cityquery" method="GET" id="searchform">
+    <p> City Fullname <input type="text" name="cityfullname" id="cityfullname"/>  
+    <p> City Shortname <input type="text" name="cityshortname" id="cityshortname"/>  
+    <input type="submit" value="search" />
+  </form>
+
+  {% if res %}
+    <hr>
+      <h2>Results</h2>
+      <p>The SQL that was executed: {{res.query}}</p>
+      <p>If it succeeded: {{res.success}}</p>
+      <p>Total number of results: {{res.count}}</p>
+    
+  {% endif %}
+            
+</div>
+{% endblock %}

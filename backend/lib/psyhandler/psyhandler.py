@@ -3,21 +3,6 @@ import socket
 from psycopg2.extensions import adapt
 from psycopg2.extensions import AsIs
 
-# the mapping between GET params and sql queries, 
-# only in this list can be parsed by GET
-# TODO: use config file? 
-SEARCH_LIST = {
-    "id" : "id = %s",
-    "city" : "city = '%s'",
-    "minlistprice" : "list_price >= %s",
-    "maxlistprice" : "list_price <= %s",
-    "bathmin" : "baths >= %s",
-    "bathmax" : "baths <= %s",
-    "bedmin" : "beds >= %s",
-    "bedmax" : "beds <= %s",
-    "status" : "status = '%s'",
-    "postalcode" : "postalcode = '%s'",
-}
 
 class PsyHandler(object):
     """
@@ -26,6 +11,24 @@ class PsyHandler(object):
     *WHY using this instead of SQLAlchemy (which is much more easy)
     *Raw SQL could do more optimization I guess...
     """
+    # the mapping between GET params and property queries, 
+    # only in this list can be parsed by GET
+    # TODO: use config file? 
+    PROPERTY_SEARCH_LIST = {
+        "id" : ("int", "id = %s",),
+        "mlsname" : ("string", "mlsname = '%s'",),
+        "listingkey" : ("string", "listingkey_numeric = '%s'",),
+        "listingid" : ("string", "listing_id = '%s'",),
+        "city" : ("string", "city = '%s'",),
+        "minlistprice" : ("float", "list_price >= %s",),
+        "maxlistprice" : ("float", "list_price <= %s",),
+        "bathmin" : ("int", "baths >= %s",),
+        "bathmax" : ("int", "baths <= %s",),
+        "bedmin" : ("int", "beds >= %s",),
+        "bedmax" : ("int", "beds <= %s",),
+        "status" : ("string", "status = '%s'",),
+        "postalcode" : ("string", "postalcode = '%s'",),
+    }
 
     def __init__(self, app, hostname=None):
         """
@@ -60,12 +63,12 @@ class PsyHandler(object):
             WHERE a=b AND c=d AND ...
         """
         conditions = []
-        for key in SEARCH_LIST:
+        for key in self.PROPERTY_SEARCH_LIST:
             if querylist.get(key):
-                conditions.append(SEARCH_LIST[key] % (querylist.get(key)))
+                conditions.append(self.PROPERTY_SEARCH_LIST[key][1] % (querylist.get(key)))
         return " AND ".join(conditions)
 
-    def __gettotal(self, table, query_list):
+    def __gettotal(self, table, condition):
         """
         Get total_count of a query, for paging
         """
@@ -73,7 +76,8 @@ class PsyHandler(object):
         query = "SELECT COUNT(*) FROM %s WHERE %s ;" 
         try:
             cur.execute(query, (AsIs(table), 
-                                AsIs(self.__gencondition(query_list)), ))
+                                AsIs(condition), )
+                       )
             total_count = cur.fetchone()
             return total_count[0]
         except Exception as e:
@@ -107,6 +111,21 @@ class PsyHandler(object):
 
 
     # public functions
+    def get_field(self, colname, colnames, result):
+        """
+        For the result of self.__getresult(), colname and results are separate
+        Need this method to act like a dictionary
+        colname: one column name
+        colnames: a list of column names
+        result: one row of results
+        """
+        if colnames.count(colname) == 1 and len(result)==len(colnames):
+            index = colnames.index(colname)
+            return result[index]
+        else:
+            return None
+
+
     def rawquery(self, rawsql):
         """
         Run query as raw sql
@@ -143,20 +162,26 @@ class PsyHandler(object):
                     "colnames": None}
 
     
-    def query_plus(self, select_list, table, query_list, orderby, paging_size, page_num):
+    def query_property(self, select_list, query_list, orderby, paging_size=20, page_num=1):
         """
         Run query from a list of GET param, plus version
+        NOTE: only for property
         :param select_list: str array
         :param query_list: str array
-        :param table: str 
-        :param orderby: str
-        :param paging_size: int
-        :param page_num: int
+        :param orderby: str, default is "id"
+        :param paging_size: int, default is 20
+        :param page_num: int, default is 1
         :return:
         """
         offset = (page_num-1)*paging_size
-        if query_list.get('descend', 'false')=='true':
+        # default orderby is "id"
+        orderby = "id" if not orderby else orderby
+        if query_list.get('descend')=='true': # TODO: fix this
             orderby += " DESC"
+        condition = self.__gencondition(query_list)
+        # when query list is empty (do not consider 'descend'), return everything
+        condition = "id>0" if not condition else condition
+        table = "properties" # NOTE: DO NOT TOUCH IT!!!
 
         cur = self.__connect()
         query = "SELECT %s \
@@ -164,15 +189,15 @@ class PsyHandler(object):
                 WHERE %s \
                 ORDER BY %s \
                 LIMIT %s \
-                OFFSET %s;" 
+                OFFSET %s;"
         try:
             cur.execute(query, (AsIs(','.join(select_list) ),
-                                AsIs(table), 
-                                AsIs(self.__gencondition(query_list)),
+                                AsIs(table),
+                                AsIs(condition),
                                 AsIs(orderby), 
                                 AsIs(str(paging_size)), 
-                                AsIs(str(offset)), ))
-            total_count = self.__gettotal(table, query_list)
+                                AsIs(str(offset)),  ))
+            total_count = self.__gettotal(table, condition)
             return self.__getresult(cur, paging=True, total=total_count)
         except Exception as e:
             return {"query": query,
@@ -201,8 +226,31 @@ class PsyHandler(object):
                     "colnames": None}
 
 
-
-
+    def getcityfullname(self, shortname):
+        """
+        Given a city shortname, get fullname from cities table
+        :param shortname: string
+        :return: string
+        """
+        rawsql = "SELECT * FROM CITYS WHERE value='%s'" % (shortname)
+        r = self.rawquery(rawsql)
+        fullname = r["results"][0][-2]
+        if not fullname:
+            fullname = "Default City"
+        return fullname
+    
+    def getcityshortname(self, fullname):
+        """
+        Given a city fullname, get shortname from cities table
+        :param fullname: string
+        :return: string
+        """
+        rawsql = "SELECT * FROM CITYS WHERE long_value='%s'" % (fullname)
+        r = self.rawquery(rawsql)
+        shortname = r["results"][0][1]
+        if not shortname:
+            shortname = "dc"
+        return shortname
 
 
 
