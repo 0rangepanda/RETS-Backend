@@ -18,36 +18,44 @@ class CrmlsHandler(object):
     Every column in model.py must be in config file [SelectField]
     and every column name should have correct name mapping with CRMLS column name
     """
-
+    """
     def __new__(cls, config_path, logfile_path, database):
-        """
-        Should check all field in our db also in config file [SelectField]
-        If not, should not do anything with this obj
-        """
+        #Should check all field in our db also in config file [SelectField]
+        #If not, should not do anything with this obj
         return super(CrmlsHandler, cls).__new__(cls)
+    """
 
-    def __init__(self, config_path, logfile_path, database):
+    def __init__(self, config_path=None, logfile_path=None, db=None, app=None):
         """
         self.config = configparser.ConfigParser(
                 interpolation=configparser.BasicInterpolation())
         """
-        self.config = myconf()
-        self.config.read(config_path, encoding=None)
-
-        self.LOGIN_URL = self.config['Authentication']['LOGIN_URL']
-        self.USR_NAME = self.config['Authentication']['USR_NAME']
-        self.USR_PSWD = self.config['Authentication']['USR_PSWD']
-        self.SelectField = self.config['SelectField']
-        self.ExtraField = self.config['ExtraField']
-        self.NotNullableField = self.config['NotNullableField']
-
-        self.status = {}
-        for k, v in self.config['Status'].items():
-            self.status[k] = v
-
-        self.logfile_path=logfile_path
-        self.database=database
-        self.mlsname = "CRMLS"
+        if config_path and logfile_path and db:
+            self.init_app(config_path=config_path, logfile_path=logfile_path, db=db, app=app)
+    
+    def init_app(self, config_path=None, logfile_path=None, db=None, app=None):
+        """
+        app is for app.app_context()
+        """
+        if config_path and logfile_path and db:
+            self.config = myconf()
+            self.config.read(config_path, encoding=None)
+            self.LOGIN_URL = self.config['Authentication']['LOGIN_URL']
+            self.USR_NAME = self.config['Authentication']['USR_NAME']
+            self.USR_PSWD = self.config['Authentication']['USR_PSWD']
+            self.SelectField = self.config['SelectField']
+            self.ExtraField = self.config['ExtraField']
+            self.NotNullableField = self.config['NotNullableField']
+            self.status = {}
+            for k, v in self.config['Status'].items():
+                self.status[k] = v
+            self.logfile_path=logfile_path
+            self.database=db
+            self.mlsname = "CRMLS"
+            self.app = app 
+            return True
+        else:
+            return False
 
     # helper functions
     def __validate_SelectField(self, SelectField, database):
@@ -272,6 +280,15 @@ class CrmlsHandler(object):
         self.__logout(session)
         return create_count, update_count, abandon_count
 
+    def update_one_with_context(self, col_name, val, create=False):
+        """
+        If running outside views, need app_context() 
+        """
+        if self.app:
+            with self.app.app_context():
+                self.update_one(col_name, val, create=create)
+        else:
+            self.update_one(col_name, val, create=create)
 
     def update_all(self, col_name, value_list, create=False):
         """
@@ -284,7 +301,7 @@ class CrmlsHandler(object):
         # we want one log for each updating
         total_create, total_update, total_abandon = 0, 0, 0
         for value in value_list:
-            create_count, update_count, abandon_count = self.update_one(col_name, value, create=create)
+            create_count, update_count, abandon_count = self.update_one_with_context(col_name, value, create=create)
             total_create += create_count
             total_update += update_count
             total_abandon += abandon_count
@@ -297,12 +314,13 @@ class CrmlsHandler(object):
     def update_all_mt(self, col_name, value_list, threads=1, create=False):
         """
         Multithread Driver function of update_one
+        If running outside views, need app_context() for each thread
         :param col_name:
         :param value_list:
         :return: if success
         """
         with concurrent.futures.ThreadPoolExecutor(max_workers=threads) as executor:
-            future_updateone = {executor.submit(self.update_one, col_name, val): val for val in value_list}
+            future_updateone = {executor.submit(self.update_one_with_context, col_name, val): val for val in value_list}
             for future in concurrent.futures.as_completed(future_updateone):
                 val = future_updateone[future]
                 create_count, update_count, abandon_count = future.result()

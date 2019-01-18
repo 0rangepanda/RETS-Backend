@@ -4,7 +4,7 @@ from flask import render_template, Blueprint
 from flask import request
 from flask_login import login_required
 
-from project import app, db, psydb
+from project import db, psydb
 from project import crmhandler
 from project.manage import bp
 

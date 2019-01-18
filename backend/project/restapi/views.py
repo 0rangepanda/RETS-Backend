@@ -4,7 +4,7 @@ from flask_login import login_required
 from flask_restful import Resource
 from flask_restful import fields, marshal_with, reqparse
 
-from project import app, api, db, psydb
+from project import api, db, psydb
 from project import crmhandler
 from project.manage import bp
 

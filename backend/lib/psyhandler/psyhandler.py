@@ -30,19 +30,22 @@ class PsyHandler(object):
         "postalcode" : ("string", "postalcode = '%s'",),
     }
 
-    def __init__(self, app, hostname=None):
+    def __init__(self, app=None, hostname=None):
         """
         app: Flask object
         """
-        self.port = app.config.get('POSTGRES_PORT')
-        self.database = app.config.get('POSTGRES_DB')
-        self.user = app.config.get('POSTGRES_USER')
-        self.password = app.config.get('POSTGRES_PASSWORD')
-        self.host = app.config.get('POSTGRES_HOST')
-
+        if app:
+            self.init_app(app=app, hostname=hostname)
+            
+    def init_app(self, app=None, hostname=None):
+        if app:
+            self.port = app.config.get('POSTGRES_PORT')
+            self.database = app.config.get('POSTGRES_DB')
+            self.user = app.config.get('POSTGRES_USER')
+            self.password = app.config.get('POSTGRES_PASSWORD')
+            self.host = app.config.get('POSTGRES_HOST')
         if hostname:
             self.host = socket.gethostbyname(hostname)
-
 
     # helper functions
     def __connect(self):
