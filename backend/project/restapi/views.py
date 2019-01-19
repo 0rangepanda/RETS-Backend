@@ -4,12 +4,11 @@ from flask_login import login_required
 from flask_restful import Resource
 from flask_restful import fields, marshal_with, reqparse
 
-from project import api, db, psydb
+from project import api
+from project import psydb
 from project import crmhandler
-from project.manage import bp
 
 from lib.utils.getimgsize import getimgsize
-
 
 
 # 
@@ -151,7 +150,6 @@ class PropertyPhotoApi(Resource):
                     res["count"] = len(imgs)        
         return res
 
-            
-api.add_resource(SinglePropertyApi, '/api/property', '/api/property/<string:mlsname>/<string:listingid>')
-api.add_resource(PropertyPhotoApi, '/api/propertyphoto', '/api/propertyphoto/<string:mlsname>/<string:listingkey>')
-api.add_resource(QueryPropertyApi, '/api/query')
+#api.add_resource(SinglePropertyApi, '/api/property', '/api/property/<string:mlsname>/<string:listingid>')
+#api.add_resource(PropertyPhotoApi, '/api/propertyphoto', '/api/propertyphoto/<string:mlsname>/<string:listingkey>')
+#api.add_resource(QueryPropertyApi, '/api/query')

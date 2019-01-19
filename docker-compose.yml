@@ -4,8 +4,8 @@ services:
   web:
     restart: always
     build: ./
-    expose:
-      - "8000"
+    ports:
+      - "8000:8000"
     environment:
       - LC_ALL=C.UTF-8
       - LANG=C.UTF-8
@@ -14,6 +14,16 @@ services:
       - FLASK_ENV=production
     volumes:
       - ./backend:/home/flask/app/backend
-    command: /usr/local/bin/gunicorn -w 2 -b :8000 project:app
+    command: /usr/local/bin/gunicorn -w 2 -b :8000 run:app
+    networks:
+      extnetwork:
+        - ipv4_address=172.28.0.2
+
+networks:
+  extnetwork:
+    ipam:
+      config:
+        - subnet=172.28.0.0/16
+        - gateway=172.28.0.1
 
 #END

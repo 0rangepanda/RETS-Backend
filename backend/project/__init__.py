@@ -51,8 +51,9 @@ crmhandler = CrmlsHandler(config_path=config_path, logfile_path=logfile_path, db
 from project.manage import bp as manage_bp
 app.register_blueprint(manage_bp, url_prefix='/manage')
 
-from project.restapi import bp as restapi_bp
-app.register_blueprint(restapi_bp, url_prefix='/api')
+import project.restapi.views
+#from project.restapi import bp as restapi_bp
+#app.register_blueprint(restapi_bp, url_prefix='/api')
 
 from project.auth import bp as auth_bp
 app.register_blueprint(auth_bp, url_prefix='/auth')
@@ -102,13 +103,17 @@ def create_app():
     app.register_blueprint(manage_bp, url_prefix='/manage')
     app.register_blueprint(auth_bp, url_prefix='/auth')
 
-    from project.restapi import bp as restapi_bp
-    app.register_blueprint(restapi_bp, url_prefix='/api')
+    #import project.restapi.views
+    #from project.restapi import *
+    #from project.restapi import bp as restapi_bp
+    #app.register_blueprint(restapi_bp, url_prefix='/api')
 
     #if not app.debug and not app.testing:
         # ... no changes to logging setup
     #    pass
     return app
 
+# Things must do AFTER create_app() called
+import project.restapi
 
 
