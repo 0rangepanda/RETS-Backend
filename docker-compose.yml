@@ -17,13 +17,13 @@ services:
     command: /usr/local/bin/gunicorn -w 2 -b :8000 run:app
     networks:
       extnetwork:
-        - ipv4_address=172.28.0.2
+        ipv4_address: 172.28.0.2
 
 networks:
   extnetwork:
     ipam:
       config:
-        - subnet=172.28.0.0/16
-        - gateway=172.28.0.1
+      - subnet: 172.28.0.0/16
+        gateway: 172.28.0.1
 
 #END
