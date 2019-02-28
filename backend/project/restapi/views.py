@@ -61,12 +61,17 @@ query_fields["p"] = fields.Integer
 get_parser.add_argument("page_size", type=int)
 query_fields["page_size"] = fields.Integer
 
+# or fields for nontype text search
+get_parser.add_argument("or", type=str)
+query_fields["or"] = fields.String
+
 class QueryPropertyApi(Resource):
     # list of select fields in db
     select_list = [
         "id", "status", "list_price", "city", "streetname", "postalcode", 
         "listingkey_numeric", "beds", "baths", "yearbuilt", "squarefeet", 
-        "pricepersquare", "listing_id", "misc", "area", "coverimage"]
+        "pricepersquare", "listing_id", "misc", "area", "coverimage",
+        "reduce_price", "reduce_percent"]
 
     def __init__(self):
         pass

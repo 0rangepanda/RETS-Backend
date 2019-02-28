@@ -130,7 +130,8 @@ class CrmlsHandler(object):
         for key in field:
             streetname.append(results.GetString(key))
         streetname = " ".join(streetname)
-        return streetname
+        # remove extra and leading&tailing space 
+        return " ".join(streetname.split())
 
     def __misc(self, results):
         """

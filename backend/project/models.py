@@ -140,6 +140,7 @@ class Property(db.Model):
         super().__init__(**kwargs)
         #could be negative, meaning price rised
         getcontext().prec = 2
+        # reduce price and percent
         if kwargs['original_price'] and kwargs['list_price']:
             self.reduce_price = Decimal(kwargs['original_price']) - Decimal(kwargs['list_price'])
             if self.reduce_price>0 and Decimal(kwargs['original_price'])>0:

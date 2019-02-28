@@ -19,7 +19,6 @@ class PsyHandler(object):
         "mlsname" : ("string", "mlsname = '%s'",),
         "listingkey" : ("string", "listingkey_numeric = '%s'",),
         "listingid" : ("string", "listing_id = '%s'",),
-        "city" : ("string", "city = '%s'",),
         "minlistprice" : ("float", "list_price >= %s",),
         "maxlistprice" : ("float", "list_price <= %s",),
         "bathmin" : ("int", "baths >= %s",),
@@ -27,7 +26,9 @@ class PsyHandler(object):
         "bedmin" : ("int", "beds >= %s",),
         "bedmax" : ("int", "beds <= %s",),
         "status" : ("string", "status = '%s'",),
+        "city" : ("string", "city = '%s'",),
         "postalcode" : ("string", "postalcode = '%s'",),
+        "streetname" : ("string", "upper(streetname) like upper('%s')",),
     }
 
     def __init__(self, app=None, hostname=None):
@@ -176,16 +177,48 @@ class PsyHandler(object):
         :param page_num: int, default is 1
         :return:
         """
+        def streetnameHandler(streetname):
+            """
+            For sql like, replace space with % and remove suffix
+            e.g.: 1615 Greencastle Ave -> 1615%Greencastle%
+            """
+            res = '%'+"%".join(streetname.split()[:-1])+'%'
+            return res
+        
+        table = "properties" # NOTE: DO NOT TOUCH IT!!!
         offset = (page_num-1)*paging_size
-        # default orderby is "id"
+        # orderby handler
         orderby = "id" if not orderby else orderby
-        if query_list.get('descend')=='true': # TODO: fix this
+        if query_list.get('descend')=='true': # will ignore other val
             orderby += " DESC"
+        # or handler, 
+        if query_list.get('or')=='true':
+            or_condition = []
+            # remove 'or', streetname, city, postalcode from query_list
+            for field in ["streetname", "city", "postalcode"]:
+                if query_list.get(field):
+                    tmp_val = query_list.pop(field)
+                    tmp_val = '%'+"%".join(tmp_val.split())+'%'
+                    query_str = "upper(%s) like upper('%s')"
+                    or_condition.append(query_str % (field, tmp_val,) )
+            # generate AND (streetname like '%x%' OR city like '%x%' OR postalcode=x)
+            or_condition = "(" + " OR ".join(or_condition) + ")" 
+        else:
+            or_condition = ""
+
+        # streetname
+        if query_list.get('streetname'):
+            query_list['streetname'] = streetnameHandler(query_list['streetname'])
+        # generate SQL WHERE
         condition = self.__gencondition(query_list)
+        if or_condition:
+            if condition:
+                condition += " AND " + or_condition
+            else:
+                condition = or_condition
         # when query list is empty (do not consider 'descend'), return everything
         condition = "id>0" if not condition else condition
-        table = "properties" # NOTE: DO NOT TOUCH IT!!!
-
+        
         cur = self.__connect()
         query = "SELECT %s \
                 FROM %s \
@@ -248,11 +281,15 @@ class PsyHandler(object):
         :param fullname: string
         :return: string
         """
-        rawsql = "SELECT * FROM CITYS WHERE long_value='%s'" % (fullname)
+        # use upper() to be case-insensitive
+        rawsql = "SELECT * FROM CITYS WHERE upper(long_value)=upper('%s')" % (fullname)
         r = self.rawquery(rawsql)
+        if len(r["results"])==0:
+            # "dcity" = default city
+            return "dcity"
         shortname = r["results"][0][1]
         if not shortname:
-            shortname = "dc"
+            shortname = "dcity"
         return shortname
 
 
