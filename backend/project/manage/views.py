@@ -4,8 +4,9 @@ from flask import render_template, Blueprint
 from flask import request
 from flask_login import login_required
 
-from project import db, psydb
+from project import db, psydb, scheduler_settings
 from project import crmhandler
+from project import scheduler
 from project.manage import bp
 
 
@@ -13,6 +14,35 @@ from project.manage import bp
 @bp.route('/index')
 def index():
     return render_template('manage/index.html')
+
+
+@bp.route('/updatemanage', methods=['GET'])
+@login_required
+def updatemanage():
+    """
+    Update scheduler and update city list
+    :return:
+    """
+    days = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]
+    times = [str(x) + ":00" for x in range(0, 24)]
+   
+    counties_res = psydb.rawquery("SELECT * FROM counties")
+    counties = counties_res["results"]
+    counties = sorted(counties, key=lambda x: x[1])
+    cities = {}
+    city_num = {"total": 0}
+    for county in counties:
+        cities_res = psydb.rawquery("SELECT * FROM citys WHERE county="+str(county[0]))
+        cities[county] = cities_res["results"]
+        cities[county] = sorted(cities[county], key=lambda x: x[1])
+        city_num[county] = 0
+        for city in cities[county]:
+            if city[5]:
+                city_num[county] += 1
+        city_num["total"] += city_num[county]
+    
+    return render_template('manage/updatemanage.html', city_num=city_num,
+        counties=counties, cities=cities, days=days, times=times, scheduler_settings=scheduler_settings, state=scheduler.state)
 
 
 @bp.route('/rawquery', methods=['GET'])
@@ -50,14 +80,16 @@ def search():
     status_list = crmhandler.getstatus() # dict of status k-v
     # list of sortable fields
     orderby_list = {
+        "reduce_price": "Reduce Price",
+        "reduce_percent": "Reduce Percent",
         "list_price": "List Price", 
         "yearbuilt": "Year Built", 
         "squarefeet": "Square Feet",
         "pricepersquare": "Price per Square",
     } 
     # list of select fields
-    select_list = ["id", "status", "list_price", "city", "streetname", "postalcode", "beds", "baths", 
-                   "yearbuilt", "squarefeet", "pricepersquare"]                     
+    select_list = ["id", "status", "list_price", "reduce_price", "reduce_percent", "city", "streetname", 
+                    "postalcode", "beds", "baths", "yearbuilt", "squarefeet", "pricepersquare"]                     
     
     # all args needed by searching page except for searching result
     args = {

@@ -1,0 +1,365 @@
+{% extends "front_base.html" %}
+{% block title %}Property Search Page{% endblock %}
+
+{% block head %}
+{{ super() }}
+<script src="{{ url_for('static', filename='frontend/js/jquery.min.js') }}"></script>
+<script src="{{ url_for('static', filename='frontend/js/bootstrap.bundle.js') }}"></script>
+<script src="{{ url_for('static', filename='frontend/js/template-web.js') }}"></script>
+<script src="{{ url_for('static', filename='frontend/js/lightslider.js') }}"></script>
+<script src="{{ url_for('static', filename='frontend/js/jquery.lazy.js') }}"></script>
+<script src="{{ url_for('static', filename='frontend/js/pagination.js') }}"></script>
+<script src="{{ url_for('static', filename='frontend/js/jquery.dropdown.js') }}"></script>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='frontend/css/bootstrap.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='frontend/css/lightslider.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='frontend/css/simplePagination.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='frontend/css/jquery.dropdown.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='frontend/css/search.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='frontend/css/search_b.css') }}">
+
+{% if pixel %}
+{{pixel|safe}}
+<script>
+    ifpixel = true;
+</script>
+{% else %}
+<script>
+    ifpixel = false;
+</script>
+{% endif %}
+
+{% endblock %}
+
+
+{% block content %}
+<!-- Advance Searchbar -->
+<div class="search-container-2134486574">
+    <div class="search-bar-2134486574">
+        <div>
+            <div class="search-textinput-2134486574">
+                <div class="bootstrap-iso">
+                    <div class="logo-wrapper-2134486574">
+                        <a class="logo" href="#">
+                            <img alt="#" src="">
+                        </a>
+                    </div>
+
+                    <div class="text-input-2134486574">
+                        <input type="text" id="text-input-2134486574" class="input-control"
+                            placeholder="Enter an address, neighborhood, city, or ZIP code"></input>
+                    </div>
+                </div>
+            </div>
+
+            <!-- /input-group -->
+
+            <div class="search-filter-2134486574">
+                <div class="bootstrap-iso">
+                    <div class="row">
+                        <div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
+                            <div class="btn-group outter-btn-group-2134486574" role="group" aria-label="First group">
+                                <!-- Min Price -->
+                                <div class="btn-group" role="group">
+                                    <button id="min-price-btn-2134486574" type="button"
+                                        class="btn btn-secondary dropdown-toggle" data-toggle="dropdown"
+                                        aria-haspopup="true" aria-expanded="false"
+                                        style="background-color: #fff; color: #000; border: 1px solid #000;">Min
+                                        Price <b class="caret"></b> </button>
+                                    <div class="dropdown-menu scrollable-menu" role="menu">
+                                        <div class="text-input-dropdown-2134486574">
+                                            <input type="text" class="" placeholder="Min Price"></input>
+                                        </div>
+                                        <li class="divider"></li>
+                                        <li class=""><a data-value="" data-display-text="Any Min Price">Any Min
+                                                Price</a></li>
+                                        <li><a data-value="10000" data-display-text="$10,000">$10,000</a></li>
+                                        <li><a data-value="20000" data-display-text="$20,000">$20,000</a></li>
+                                        <li><a data-value="30000" data-display-text="$30,000">$30,000</a></li>
+                                        <li><a data-value="50000" data-display-text="$50,000">$50,000</a></li>
+                                        <li><a data-value="75000" data-display-text="$75,000">$75,000</a></li>
+                                        <li><a data-value="100000" data-display-text="$100,000">$100,000</a></li>
+                                        <li><a data-value="125000" data-display-text="$125,000">$125,000</a></li>
+                                        <li><a data-value="150000" data-display-text="$150,000">$150,000</a></li>
+                                        <li><a data-value="175000" data-display-text="$175,000">$175,000</a></li>
+                                        <li><a data-value="200000" data-display-text="$200,000">$200,000</a></li>
+                                        <li><a data-value="250000" data-display-text="$250,000">$250,000</a></li>
+                                        <li><a data-value="300000" data-display-text="$300,000">$300,000</a></li>
+                                        <li><a data-value="350000" data-display-text="$350,000">$350,000</a></li>
+                                        <li><a data-value="400000" data-display-text="$400,000">$400,000</a></li>
+                                        <li><a data-value="450000" data-display-text="$450,000">$450,000</a></li>
+                                        <li><a data-value="500000" data-display-text="$500,000">$500,000</a></li>
+                                        <li><a data-value="550000" data-display-text="$550,000">$550,000</a></li>
+                                        <li><a data-value="600000" data-display-text="$600,000">$600,000</a></li>
+                                        <li><a data-value="650000" data-display-text="$650,000">$650,000</a></li>
+                                        <li><a data-value="700000" data-display-text="$700,000">$700,000</a></li>
+                                        <li><a data-value="750000" data-display-text="$750,000">$750,000</a></li>
+                                        <li><a data-value="800000" data-display-text="$800,000">$800,000</a></li>
+                                        <li><a data-value="850000" data-display-text="$850,000">$850,000</a></li>
+                                        <li><a data-value="900000" data-display-text="$900,000">$900,000</a></li>
+                                        <li><a data-value="950000" data-display-text="$950,000">$950,000</a></li>
+                                        <li><a data-value="1000000" data-display-text="$1M">$1M</a></li>
+                                        <li><a data-value="1100000" data-display-text="$1.1M">$1.1M</a></li>
+                                        <li><a data-value="1200000" data-display-text="$1.2M">$1.2M</a></li>
+                                        <li><a data-value="1300000" data-display-text="$1.3M">$1.3M</a></li>
+                                        <li><a data-value="1400000" data-display-text="$1.4M">$1.4M</a></li>
+                                        <li><a data-value="1500000" data-display-text="$1.5M">$1.5M</a></li>
+                                        <li><a data-value="1600000" data-display-text="$1.6M">$1.6M</a></li>
+                                        <li><a data-value="1700000" data-display-text="$1.7M">$1.7M</a></li>
+                                        <li><a data-value="1800000" data-display-text="$1.8M">$1.8M</a></li>
+                                        <li><a data-value="1900000" data-display-text="$1.9M">$1.9M</a></li>
+                                        <li><a data-value="2000000" data-display-text="$2M">$2M</a></li>
+                                        <li><a data-value="2250000" data-display-text="$2.25M">$2.25M</a></li>
+                                        <li><a data-value="2500000" data-display-text="$2.5M">$2.5M</a></li>
+                                        <li><a data-value="2750000" data-display-text="$2.75M">$2.75M</a></li>
+                                        <li><a data-value="3000000" data-display-text="$3M">$3M</a></li>
+                                        <li><a data-value="3500000" data-display-text="$3.5M">$3.5M</a></li>
+                                        <li><a data-value="4000000" data-display-text="$4M">$4M</a></li>
+                                        <li><a data-value="5000000" data-display-text="$5M">$5M</a></li>
+                                        <li><a data-value="10000000" data-display-text="$10M">$10M</a></li>
+                                        <li><a data-value="20000000" data-display-text="$20M">$20M</a></li>
+                                    </div>
+                                </div>
+                                <!-- Max Price -->
+                                <div class="btn-group" role="group">
+                                    <button id="max-price-btn-2134486574" type="button"
+                                        class="btn btn-secondary dropdown-toggle" data-toggle="dropdown"
+                                        aria-haspopup="true" aria-expanded="false"
+                                        style="background-color: #fff; color: #000; border: 1px solid #000;">Max
+                                        Price <b class="caret"></b> </button>
+
+                                    <div class="dropdown-menu scrollable-menu" role="menu">
+                                        <div class="text-input-dropdown-2134486574">
+                                            <input type="text" class="" placeholder="Max Price"></input>
+                                        </div>
+                                        <li class="divider"></li>
+                                        <li class=""><a data-value="" data-display-text="Any Max Price">Any Max
+                                                Price</a></li>
+                                        <li><a data-value="10000" data-display-text="$10,000">$10,000</a></li>
+                                        <li><a data-value="20000" data-display-text="$20,000">$20,000</a></li>
+                                        <li><a data-value="30000" data-display-text="$30,000">$30,000</a></li>
+                                        <li><a data-value="50000" data-display-text="$50,000">$50,000</a></li>
+                                        <li><a data-value="75000" data-display-text="$75,000">$75,000</a></li>
+                                        <li><a data-value="100000" data-display-text="$100,000">$100,000</a></li>
+                                        <li><a data-value="125000" data-display-text="$125,000">$125,000</a></li>
+                                        <li><a data-value="150000" data-display-text="$150,000">$150,000</a></li>
+                                        <li><a data-value="175000" data-display-text="$175,000">$175,000</a></li>
+                                        <li><a data-value="200000" data-display-text="$200,000">$200,000</a></li>
+                                        <li><a data-value="250000" data-display-text="$250,000">$250,000</a></li>
+                                        <li><a data-value="300000" data-display-text="$300,000">$300,000</a></li>
+                                        <li><a data-value="350000" data-display-text="$350,000">$350,000</a></li>
+                                        <li><a data-value="400000" data-display-text="$400,000">$400,000</a></li>
+                                        <li><a data-value="450000" data-display-text="$450,000">$450,000</a></li>
+                                        <li><a data-value="500000" data-display-text="$500,000">$500,000</a></li>
+                                        <li><a data-value="550000" data-display-text="$550,000">$550,000</a></li>
+                                        <li><a data-value="600000" data-display-text="$600,000">$600,000</a></li>
+                                        <li><a data-value="650000" data-display-text="$650,000">$650,000</a></li>
+                                        <li><a data-value="700000" data-display-text="$700,000">$700,000</a></li>
+                                        <li><a data-value="750000" data-display-text="$750,000">$750,000</a></li>
+                                        <li><a data-value="800000" data-display-text="$800,000">$800,000</a></li>
+                                        <li><a data-value="850000" data-display-text="$850,000">$850,000</a></li>
+                                        <li><a data-value="900000" data-display-text="$900,000">$900,000</a></li>
+                                        <li><a data-value="950000" data-display-text="$950,000">$950,000</a></li>
+                                        <li><a data-value="1000000" data-display-text="$1M">$1M</a></li>
+                                        <li><a data-value="1100000" data-display-text="$1.1M">$1.1M</a></li>
+                                        <li><a data-value="1200000" data-display-text="$1.2M">$1.2M</a></li>
+                                        <li><a data-value="1300000" data-display-text="$1.3M">$1.3M</a></li>
+                                        <li><a data-value="1400000" data-display-text="$1.4M">$1.4M</a></li>
+                                        <li><a data-value="1500000" data-display-text="$1.5M">$1.5M</a></li>
+                                        <li><a data-value="1600000" data-display-text="$1.6M">$1.6M</a></li>
+                                        <li><a data-value="1700000" data-display-text="$1.7M">$1.7M</a></li>
+                                        <li><a data-value="1800000" data-display-text="$1.8M">$1.8M</a></li>
+                                        <li><a data-value="1900000" data-display-text="$1.9M">$1.9M</a></li>
+                                        <li><a data-value="2000000" data-display-text="$2M">$2M</a></li>
+                                        <li><a data-value="2250000" data-display-text="$2.25M">$2.25M</a></li>
+                                        <li><a data-value="2500000" data-display-text="$2.5M">$2.5M</a></li>
+                                        <li><a data-value="2750000" data-display-text="$2.75M">$2.75M</a></li>
+                                        <li><a data-value="3000000" data-display-text="$3M">$3M</a></li>
+                                        <li><a data-value="3500000" data-display-text="$3.5M">$3.5M</a></li>
+                                        <li><a data-value="4000000" data-display-text="$4M">$4M</a></li>
+                                        <li><a data-value="5000000" data-display-text="$5M">$5M</a></li>
+                                        <li><a data-value="10000000" data-display-text="$10M">$10M</a></li>
+                                        <li><a data-value="20000000" data-display-text="$20M">$20M</a></li>
+                                    </div>
+                                </div>
+                                <!-- Beds -->
+                                <div class="btn-group" role="group">
+                                    <button id="beds-btn-2134486574" type="button"
+                                        class="btn btn-secondary dropdown-toggle" data-toggle="dropdown"
+                                        aria-haspopup="true" aria-expanded="false"
+                                        style="background-color: #fff; color: #000; border: 1px solid #000;">Beds
+                                        <b class="caret"></b></button>
+
+                                    <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                                        <li class=""><a data-value="" data-display-text="Any Beds">Any Beds
+                                            </a></li>
+                                        <li><a data-value="1" data-display-text="1+ Beds">1+</a></li>
+                                        <li><a data-value="2" data-display-text="2+ Beds">2+</a></li>
+                                        <li><a data-value="3" data-display-text="3+ Beds">3+</a></li>
+                                        <li><a data-value="4" data-display-text="4+ Beds">4+</a></li>
+                                        <li><a data-value="5" data-display-text="5+ Beds">5+</a></li>
+                                        <li><a data-value="6" data-display-text="6+ Beds">6+</a></li>
+                                    </div>
+
+                                </div>
+                                <!-- Baths -->
+                                <div class="btn-group" role="group">
+                                    <button id="baths-btn-2134486574" type="button"
+                                        class="btn btn-secondary dropdown-toggle" data-toggle="dropdown"
+                                        aria-haspopup="true" aria-expanded="false"
+                                        style="background-color: #fff; color: #000; border: 1px solid #000;">Baths
+                                        <b class="caret"></b></button>
+                                    <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                                        <li class=""><a data-value="" data-display-text="Any Baths">Any Baths
+                                            </a></li>
+                                        <li><a data-value="1" data-display-text="1+ Baths">1+</a></li>
+                                        <li><a data-value="2" data-display-text="2+ Baths">2+</a></li>
+                                        <li><a data-value="3" data-display-text="3+ Baths">3+</a></li>
+                                        <li><a data-value="4" data-display-text="4+ Baths">4+</a></li>
+                                        <li><a data-value="5" data-display-text="5+ Baths">5+</a></li>
+                                        <li><a data-value="6" data-display-text="6+ Baths">6+</a></li>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- More (should be toggle) -->
+                            <!--
+                            <div class="btn-group" role="group" aria-label="Second group">
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-secondary dropdown-toggle"
+                                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
+                                        style="background-color: #fff; color: #000; border: 1px solid #000;">More</button>
+
+                                    <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                                        <a class="dropdown-item" href="#">Dropdown link</a>
+
+                                        <a class="dropdown-item" href="#">Dropdown link</a>
+                                    </div>
+                                </div>
+                            </div>
+                            -->
+
+                            <!-- Sortby -->
+                            <div class="btn-group" role="group" aria-label="Third group">
+                                <div class="btn-group" role="group">
+                                    <button id="sortby-btn-2134486574" type="button"
+                                        class="btn btn-secondary dropdown-toggle" sort-value="desc" text-value="Sort by"
+                                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
+                                        style="background-color: #fff; color: #000; border: 1px solid #000;">Sort
+                                        by
+                                        <b class="caret"></b>
+                                    </button>
+                                    <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                                        <li><a id="sortby-dec-2134486574" data-value="desc">Descend ↓</a></li>
+                                        <li><a id="sortby-asc-2134486574" data-value="asc">Ascend ↑</a></li>
+                                        <li class="divider"></li>
+                                        <li><a data-value="1" data-display-text="Price Reduce (percentage)">Price
+                                                Reduce (percentage)</a></li>
+                                        <li><a data-value="2" data-display-text="Price Reduce (price)">Price Reduce
+                                                (price)</a></li>
+                                        <li><a data-value="3" data-display-text="List Price">List Price</a></li>
+                                        <li><a data-value="4" data-display-text="Year Built">Year Built</a></li>
+                                        <li><a data-value="5" data-display-text="Square Footage">Square Footage</a></li>
+                                        <li><a data-value="6" data-display-text="Price per Square">Price per Square</a>
+                                        </li>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="search-button-div-2134486574" class="btn-group" role="group"
+                                aria-label="Forth group">
+                                <button type="button" id="search-button-2134486574" class="btn btn-secondary"
+                                    style="background-color: #5cb85c; color: #ffffff; border: 1px solid #000;">Search</button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- row -->
+                </div>
+            </div>
+            <!-- bootstrap-iso -->
+        </div>
+    </div>
+</div>
+
+<hr class="hr-2134486574">
+
+<!-- search result, using template -->
+<div class="text-center" style="width: 100%;">
+    <div id="gallery-view" class="gallery-view" style="width: 100%;">
+        <div class="result-count">
+            <h1>
+                <span class="count" id="count-2134486574"></span>
+            </h1>
+        </div>
+        <div id="gallery-properties"></div>
+        <div class="pagination-wrap">
+            <div id="pagination"></div>
+        </div>
+    </div>
+</div>
+
+{% raw %}
+<!-- gallery-property template -->
+<script id="test" type="text/html">
+    <div class="gallery-property">
+        <div class="photo-wrap">
+            <a id={{img_id}} style="display:block;" href={{link}}>
+                <!-- <img class="lazy photo gallery-photo" src="" data-src={{coverimage}} style="display: block;"> -->
+            </a>
+        </div>
+        <div class="description-wrap">
+            <div class="description-overlay">
+                <div class="price">
+                    ${{list_price}}
+                </div>
+                <div class="city-and-neighborhood">
+                    <span class="address">{{address}}</span>
+                    <span class="neighborhood" style="display: none;"></span>
+                    <span class="city">{{city}}</span>
+                </div>
+            </div>
+        </div>
+        <div class="property-description">
+            <!--
+                <button class="btn btn-default btn-favorite pull-right add-favorite">
+                    <span class="glyphicon glyphicon-heart"></span>
+                </button>
+                -->
+            <table class="features">
+                <thead>
+                    <tr>
+                        <th>Beds</th>
+                        <th>Baths</th>
+                        <th>Sqft</th>
+                        <th>Yearbuilt</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>{{beds}}</td>
+                        <td>{{baths}}</td>
+                        <td>{{area}}</td>
+                        <td>{{yearbuilt}}</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="idx-info idx">
+                <!-- Status, list agent name, list mls -->
+                <strong>{{status}}</strong> Listed by {{listagent_firstname}} {{listagent_lastname}} with
+                {{listoffice_name}}
+            </div>
+        </div>
+    </div>
+</script>
+{% endraw %}
+
+<script type="text/javascript"
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCdlXoF9Z3-JwwRLjtGXQvX3rqzwdO5Mek&libraries=places"></script>
+
+<script type="text/javascript">
+
+</script>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='frontend/js/search.js') }}"></script>
+{% endblock %}

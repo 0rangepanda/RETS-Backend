@@ -1,0 +1,315 @@
+{% extends 'base.html' %}
+
+{% block title %}Update Management{% endblock %}
+
+{% block head %}
+{{ super() }}
+<!-- Generic page styles -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.css') }}">
+<style>
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+  }
+
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    -webkit-transition: .4s;
+    transition: .4s;
+  }
+
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    -webkit-transition: .4s;
+    transition: .4s;
+  }
+
+  input:checked+.slider {
+    background-color: #2196F3;
+  }
+
+  input:focus+.slider {
+    box-shadow: 0 0 1px #2196F3;
+  }
+
+  input:checked+.slider:before {
+    -webkit-transform: translateX(26px);
+    -ms-transform: translateX(26px);
+    transform: translateX(26px);
+  }
+
+  /* Rounded sliders */
+  .slider.round {
+    border-radius: 34px;
+  }
+
+  .slider.round:before {
+    border-radius: 50%;
+  }
+
+  li.update_list {
+    font-size: 18px;
+  }
+
+  span.red-badge {
+    background-color: red !important;
+  }
+
+  span.blue-badge {
+    background-color: deepskyblue !important;
+  }
+
+  span.green-badge {
+    background-color: lawngreen !important;
+  }
+</style>
+
+<script>
+  // post wrapper
+  function post_wrapper(postData, url) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", url, true);
+    //xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+    xhr.setRequestHeader("Content-type", "application/json");
+    xhr.onreadystatechange = function () {
+      var XMLHttpReq = xhr;
+      if (XMLHttpReq.readyState == 4) {
+        if (XMLHttpReq.status == 200) {
+          var text = XMLHttpReq.responseText;
+        }
+      }
+    };
+    xhr.send(JSON.stringify(postData));
+  }
+
+
+  //Gather all the toggled city and post to database 
+  function saveUpdate() {
+    //Gather all the toggled city and add to this list
+    var postData = [];
+    var allcityDOM = document.querySelectorAll("li.update_list");
+    for (let index = 0; index < allcityDOM.length; index++) {
+      var element = allcityDOM[index];
+      var checkBox = element.querySelector("input");
+      if (checkBox.checked == true) {
+        postData.push({
+          "name": element.getAttribute("name")
+        });
+      }
+    }
+    post_wrapper(postData, "/api/updatecity");
+    //confirm window
+    var r = confirm("Update city list success!");
+    //redirect
+    window.location.href = "/manage/updatemanage";
+  }
+
+  // Save scheduler settings 
+  function saveSettings() {
+    var postData = {
+      "scheduler_settings": {}
+    };
+    //get value from select list
+    var e = document.getElementById("update_day");
+    postData["scheduler_settings"]["day"] = e.options[e.selectedIndex].value;
+
+    e = document.getElementById("update_time");
+    postData["scheduler_settings"]["time"] = e.options[e.selectedIndex].value;
+
+    post_wrapper(postData, "/api/cache");
+    //confirm window
+    var r = confirm("Save settings success!");
+    //redirect
+    window.location.href = "/manage/updatemanage";
+  }
+
+  //check scheduler state
+  function checkSchedulerState() {
+    var xmlHttp = new XMLHttpRequest();
+    xmlHttp.open("GET", "/api/scheduler", false); // false for synchronous request
+    xmlHttp.send(null);
+    var res = JSON.parse(xmlHttp.responseText);
+    var state = res["STATE"];
+    return state;
+  }
+
+  //Schedule an Update immediately 
+  function doUpdate() {
+    var state = checkSchedulerState();
+    console.log(state);
+    if (state == 3) {
+      //if an update is already running, pop up the error message
+      var r = confirm("Update is already running. Please wait!");
+      //redirect
+      window.location.href = "/manage/updatemanage";
+    } else {
+      //
+      var action = "do_update";
+      schedulerAction(action);
+    } 
+  }
+
+  //Send action to scheduler
+  function schedulerAction(action) {
+    var allowed_action = ["start", "shutdown", "resume", "pause", "do_update"];
+    if (!allowed_action.includes(action)) {
+      var r = confirm("Action not allowed!");
+      return false;
+    }
+    var postData = {
+      "action": action
+    };
+    post_wrapper(postData, "/api/scheduler");
+    //confirm window
+    var r = confirm("Update will run immediately!");
+    //redirect
+    window.location.href = "/manage/updatemanage";
+    return true;
+  }
+</script>
+{% endblock %}
+
+{% block content %}
+<script>
+</script>
+
+<div class="bootstrap-iso">
+  <div class="container">
+    <h1>Update Scheduler Management</h1>
+    <br>
+    <div class="container" id="scheduler">
+      <p>
+        Set auto update on every
+        <select name="update_day" id="update_day">
+          {% for day in days %}
+          {% if day==scheduler_settings["day"] %}
+          <option value={{day}} , selected="selected">{{day}}</option>
+          {% else %}
+          <option value={{day}}>{{day}}</option>
+          {% endif %}
+          {% endfor %}
+        </select>
+        &nbsp&nbsp&nbsp&nbsp
+        at
+        <select name="update_time" id="update_time">
+          {% for time in times %}
+          {% if time==scheduler_settings["time"] %}
+          <option value={{time}}, selected="selected">{{time}}</option>
+          {% else %}
+          <option value={{time}}>{{time}}</option>
+          {% endif %}
+          {% endfor %}
+        </select>
+        &nbsp&nbsp&nbsp&nbsp
+        <button id="save_settings" onclick="saveSettings()">Save Settings</button>
+        &nbsp&nbsp&nbsp&nbsp
+        <br>
+        <br>
+        OR &nbsp&nbsp <button id="do_update" onclick="doUpdate()">Schedule an update immediately</button>
+      </p>
+      <br>
+      Scheduler State:
+      {% if state==0 %}
+      <span class="badge red-badge">Stopped</span>
+      {% elif state==1 %}
+      <span class="badge green-badge">Running</span>
+      {% elif state==2 %}
+      <span class="badge blue-badge">Pause</span>
+      {% else %}
+      <span class="badge ">Unknown</span>
+      {% endif %}
+      &nbsp&nbsp&nbsp&nbsp
+      <button id="shutdown" onclick="schedulerAction('shutdown')">Shut Down the Scheduler</button>
+      &nbsp&nbsp
+      <button id="start" onclick="schedulerAction('start')">Start the Scheduler</button>
+      &nbsp&nbsp
+      <button id="start" onclick="schedulerAction('pause')">Pause</button>
+      &nbsp&nbsp
+      <button id="start" onclick="schedulerAction('resume')">Resume</button>
+    </div>
+    <hr>
+    <h1>Update Citylist Management</h1>
+    <br>
+    <!-- Show the list and select Counties and Cites-->
+    <div class="container" id="all_counties">
+      <button id="save_update" onclick="saveUpdate()">Save city list</button>
+      &nbsp&nbsp&nbsp&nbsp
+      <!-- <button id="show_citylist" onclick="saveUpdate()">Show selected cities</button> -->
+      <br>
+      &nbsp&nbsp&nbsp
+
+      <div class="alert alert-dismissible alert-success">
+        <strong>Totally number in the list: {{city_num["total"]}}</strong>
+        <br>
+        <br>
+        {% for county in counties %}
+        {% if city_num[county] >0 %}
+        <strong>{{county[3]}}: </strong><br>
+        -&nbsp
+        {% for city in cities[county] %}
+        {% if city[5] %}
+        {{city[3]}},&nbsp
+        {% endif %}
+        {% endfor %}<br>
+        {% endif %}
+        {% endfor %}
+      </div>
+
+
+      <div class="panel-group" id="accordion">
+        {% for county in counties %}
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h4 class="panel-title">
+              <a data-toggle="collapse" data-parent="#accordion" href="#collapse{{county[0]}}">
+                {{county[3]}}
+              </a>
+            </h4>
+          </div>
+          <div id="collapse{{county[0]}}" class="panel-collapse collapse">
+            <div class="container city_list">
+              {% for city in cities[county] %}
+              <li class="update_list" name="{{city[1]}}">
+                {{city[3]}}
+                <label class="switch">
+                  {% if city[5] %}
+                  <input type="checkbox" checked>
+                  {% else %}
+                  <input type="checkbox">
+                  {% endif %}
+                  <span class="slider round"></span>
+                </label>
+              </li>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+
+      </div>
+    </div>
+  </div>
+  <!-- Show current update plan and modify -->
+
+</div>
+{% endblock %}

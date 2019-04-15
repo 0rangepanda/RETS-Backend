@@ -19,8 +19,12 @@ class PsyHandler(object):
         "mlsname" : ("string", "mlsname = '%s'",),
         "listingkey" : ("string", "listingkey_numeric = '%s'",),
         "listingid" : ("string", "listing_id = '%s'",),
-        "minlistprice" : ("float", "list_price >= %s",),
         "maxlistprice" : ("float", "list_price <= %s",),
+        "minlistprice" : ("float", "list_price >= %s",),
+        "maxreduceprice" : ("float", "reduce_price <= %s",),
+        "minreduceprice" : ("float", "reduce_price >= %s",),
+        "maxreducepercent" : ("float", "reduce_percent <= %s",),
+        "minreducepercent" : ("float", "reduce_percent >= %s",),
         "bathmin" : ("int", "baths >= %s",),
         "bathmax" : ("int", "baths <= %s",),
         "bedmin" : ("int", "beds >= %s",),
@@ -261,6 +265,19 @@ class PsyHandler(object):
                     "results": None,
                     "colnames": None}
 
+    def getfullname(self, table, shortname):
+        """
+        Given a county shortname, get fullname from a table
+        :param shortname: string
+        :return: string
+        """
+        rawsql = "SELECT * FROM %s WHERE value='%s'" % (table, shortname)
+        r = self.rawquery(rawsql)
+        fullname = r["results"][0][3]
+        if not fullname:
+            fullname = "Default Fullname"
+        return fullname
+
 
     def getcityfullname(self, shortname):
         """
@@ -270,7 +287,7 @@ class PsyHandler(object):
         """
         rawsql = "SELECT * FROM CITYS WHERE value='%s'" % (shortname)
         r = self.rawquery(rawsql)
-        fullname = r["results"][0][-2]
+        fullname = r["results"][0][3]
         if not fullname:
             fullname = "Default City"
         return fullname

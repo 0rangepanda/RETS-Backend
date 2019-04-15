@@ -1,19 +1,28 @@
+import json
+
 from flask import render_template, Blueprint, after_this_request
 from flask import request
 from flask_login import login_required
 from flask_restful import Resource
 from flask_restful import fields, marshal_with, reqparse
+from flask import current_app as app
 
-from project import api
+from project import api, db
+from project import scheduler_settings
 from project import psydb
 from project import crmhandler
+from project.models import Property, User, City, County, Neighbor
 
+from lib.facebookads.localcsvhandler import LocalCsvHandler
 from lib.utils.getimgsize import getimgsize
 
 
 # 
 # Single property api
 class SinglePropertyApi(Resource):
+    """
+    Query a single property info according to mlsname and listing id
+    """
     def get(self, mlsname, listingid):
         r = psydb.query({"mlsname": mlsname, "listingid": listingid}, "properties")
         res = {}
@@ -23,9 +32,13 @@ class SinglePropertyApi(Resource):
             for k, v in zip(list(r['colnames']), list(r['results'][0])) :
                 property_info[str(k)]= str(v)
             res["property_info"] = property_info
+            # misc
+            misc = eval(res["property_info"]["misc"]) 
+            for k, v in misc.items():
+               res["property_info"][k] = v
             # query city shortname to fullname
             res["property_info"]["city"] = psydb.getcityfullname(res["property_info"]["city"])
-
+            res["property_info"]["county"] = psydb.getfullname("COUNTIES", res["property_info"]["county"])
         else:
             res["success"] = "false"
         return res
@@ -155,6 +168,77 @@ class PropertyPhotoApi(Resource):
                     res["count"] = len(imgs)        
         return res
 
-#api.add_resource(SinglePropertyApi, '/api/property', '/api/property/<string:mlsname>/<string:listingid>')
-#api.add_resource(PropertyPhotoApi, '/api/propertyphoto', '/api/propertyphoto/<string:mlsname>/<string:listingkey>')
-#api.add_resource(QueryPropertyApi, '/api/query')
+
+# 
+# Facebookads csv api
+class FacebookAdsApi(Resource):
+    """
+    
+    """
+    select_list = [
+        "id", "status", "list_price", "city", "streetname", "postalcode", 
+        "latitude", "longitude", "neighborhood", "image",
+        "beds", "baths", "yearbuilt", "listing_id", "misc", "coverimage",]
+
+    def __init__(self):
+        with app.app_context():
+            self.csvhandler = LocalCsvHandler(app.config["CONFIGDIR"]+'/fbcsv_local.ini')
+
+    def get(self):
+        """
+        Download a csv
+        """
+        args = get_parser.parse_args()
+        page_num = 1
+        page_size = args.get('page_size', 20)
+        if not page_size:
+            page_size = 1000000 # No limit
+        # The input should be city short name
+        query = psydb.query_property(
+            self.select_list, args, args.get("orderby"), page_size, page_num)
+        # handle results
+        res = []
+        if query["results"]:
+            for p in query["results"]:
+                property_info = {}
+                for k, v in zip(list(query['colnames']), list(p)) :
+                    property_info[str(k)]= str(v)
+                property_info["city"] = psydb.getcityfullname(property_info["city"])  
+                property_info["status"] = crmhandler.getstatus(status=property_info["status"])
+                misc = eval(property_info["misc"]) 
+                for k, v in misc.items():
+                    property_info[k] = v
+                res.append(property_info)
+        # generate csv and save
+        results = self.csvhandler.parse_all(res, hardmode=False)
+        return {"res": results}
+
+    def post(self):
+        """
+        Generate a csv according to post params
+        """
+        args = get_parser.parse_args()
+        page_num = 1
+        page_size = args.get('page_size', 20)
+        if not page_size:
+            page_size = 1000000 # No limit
+        # The input should be city short name
+        query = psydb.query_property(
+            self.select_list, args, args.get("orderby"), page_size, page_num)
+        # handle results
+        res = []
+        if query["results"]:
+            for p in query["results"]:
+                property_info = {}
+                for k, v in zip(list(query['colnames']), list(p)) :
+                    property_info[str(k)]= str(v)
+                property_info["city"] = psydb.getcityfullname(property_info["city"])  
+                #property_info["status"] = crmhandler.getstatus(status=property_info["status"])
+                misc = eval(property_info["misc"]) 
+                for k, v in misc.items():
+                    property_info[k] = v
+                res.append(property_info)
+        # generate csv and save
+        results = self.csvhandler.parse_all(res, hardmode=False)
+        self.csvhandler.gen_xml(results, app.config["DATADIR"]+'/fbadsxml')
+        return {"res": results}, 201 

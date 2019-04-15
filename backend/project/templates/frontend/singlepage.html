@@ -1,0 +1,506 @@
+{% extends "front_base.html" %}
+{% block title %}Property Search Page{% endblock %}
+
+{% block head %}
+{{ super() }}
+<script src="{{ url_for('static', filename='frontend/js/jquery.min.js') }}"></script>
+<script src="{{ url_for('static', filename='frontend/js/bootstrap.bundle.js') }}"></script>
+<script src="{{ url_for('static', filename='frontend/js/template-web.js') }}"></script>
+<script src="{{ url_for('static', filename='frontend/js/lightslider.js') }}"></script>
+<script src="{{ url_for('static', filename='frontend/js/jquery.lazy.js') }}"></script>
+<script src="{{ url_for('static', filename='frontend/js/pagination.js') }}"></script>
+<script src="{{ url_for('static', filename='frontend/js/jquery.dropdown.js') }}"></script>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='frontend/css/bootstrap.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='frontend/css/lightslider.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='frontend/css/style.css') }}">
+
+{% if pixel %}
+    {{pixel|safe}}
+{% endif %}
+{% endblock %}
+
+
+{% block content %}
+<div id="content">
+</div>
+
+{% raw %}
+<!-- template -->
+<script id="test" type="text/html">
+    <div class="entry-content">
+        <div class="container text-center">
+            <div class="judulnya">
+                <center>
+                    <h1>{{streetname}}, {{city}}, {{postalcode}}</h1>
+                </center>
+            </div>
+
+            <div id="item" class="item" style="max-width: 100%; max-height: 300px; padding-bottom: 50%;">
+
+                <center>
+                    <ul id="autoWidth" class="cs-hidden" style="min-height: 100%;">
+
+                    </ul>
+                </center>
+                <br>
+                <div class="kolomsatu">
+                    <h1 style="border-bottom: 1px double #cecece;">{{list_price}}</h1>
+                    <p class="edit-facts-light"
+                        style="display:inline;font-weight:bold;font-size:14px;margin-left:-10px;">
+                        <span class="middle-dot" aria-hidden="true">&nbsp;</span>
+                        {{if beds<2 }}
+                        <img src="https://break2000.com/wp499/wp-content/uploads/2019/03/bed.png"><span>{{beds}}
+                            bed</span>
+                        {{else}}
+                        <img src="https://break2000.com/wp499/wp-content/uploads/2019/03/bed.png"><span>{{beds}}
+                            beds</span>
+                        {{/if}}
+                        <span class="middle-dot" aria-hidden="true">&nbsp;</span>
+                        {{if baths<2 }}
+                        <img src="https://break2000.com/wp499/wp-content/uploads/2019/03/bath.png"><span>{{baths}}
+                            bath</span>
+                        {{else}}
+                        <img src="https://break2000.com/wp499/wp-content/uploads/2019/03/bath.png"><span>{{baths}}
+                            baths</span>
+                        {{/if}}
+                        <span class="middle-dot" aria-hidden="true">&nbsp;</span>
+                        {{if squarefeet==-1 }}
+                        <img src="https://break2000.com/wp499/wp-content/uploads/2019/03/sqft.png"><span>Unknown
+                            sqft</span>
+                        {{else}}
+                        <img src="https://break2000.com/wp499/wp-content/uploads/2019/03/sqft.png"><span>{{squarefeet}}
+                            sqft</span>
+                        {{/if}}
+
+                    </p>
+                    <br></br>
+                    <h4 style="background: #cecece;padding: 10px 10px 10px 10px;">Active MLS # {{listing_id}} | Listed
+                        by {{listagent_firstname}} {{listagent_lastname}} with {{listoffice_name}} </h4>
+
+                    <h5>Description:</h5>
+                    <div
+                        style="background:#d6ffe5;height:auto;margin-right:10px;padding-top:10px;padding-bottom:5px;text-align:justify;padding-right:10px;padding-left:10px;font-size:12px;">
+                        <p>{{description}}</p>
+                    </div>
+
+
+                    <!--<h5>More Features:</h5>-->
+                    <style type="text/css">
+                        table.tableizer-table {
+                            font-size: 12px;
+                            border: 1px solid #CCC;
+                            font-family: Arial, Helvetica, sans-serif;
+                        }
+
+                        .tableizer-table td {
+                            padding: 4px;
+                            margin: 3px;
+                            border: 1px solid #CCC;
+                            background: #edf6ff;
+                        }
+
+                        .tableizer-table th {
+                            background-color: #104E8B;
+                            color: #FFF;
+                            font-weight: bold;
+                        }
+                    </style>
+
+                    <table class="tableizer-table">
+                        <thead>
+                            <tr class="tableizer-firstrow">
+                                <th>More Features</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Price</td>
+                                <td>: {{list_price}}</td>
+                            </tr>
+                            <tr>
+                                <td>Address</td>
+                                <td>: {{streetname}}</td>
+                            </tr>
+                            <tr>
+                                <td>City</td>
+                                <td>: {{city}}</td>
+                            </tr>
+                            <tr>
+                                <td>State</td>
+                                <td>: {{state}}</td>
+                            </tr>
+                            <tr>
+                                <td>Zip Code</td>
+                                <td>: {{postalcode}}</td>
+                            </tr>
+                            <tr>
+                                <td>Year Built</td>
+                                <td>: {{yearbuilt}}</td>
+                            </tr>
+                            <tr>
+                                <td>Square Feet</td>
+                                <td>: {{area}}</td>
+                            </tr>
+                            <tr>
+                                <td>Lot Sqft</td>
+                                <td>: {{squarefeet}}</td>
+                            </tr>
+                            <tr>
+                                <td>Bed Room</td>
+                                <td>: {{beds}}</td>
+                            </tr>
+                            <tr>
+                                <td>Bath Room</td>
+                                <td>: {{baths}}</td>
+                            </tr>
+                            <tr>
+                                <td>Garage</td>
+                                <td>: 2</td>
+                            </tr>
+                            <tr>
+                                <td>Type</td>
+                                <td>: Residential</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="subkolomsatu">
+                        <table class="tableizer-table">
+                            <thead>
+                                <tr class="tableizer-firstrow">
+                                    <th>Interior</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Above Grade Sqft</td>
+                                    <td>1,479</td>
+                                </tr>
+                                <tr>
+                                    <td>Interior Features</td>
+                                    <td>Laundry Features - Dryer Included</td>
+                                </tr>
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td>Laundry Features - Washer Included</td>
+                                </tr>
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td>Room Type - Entry</td>
+                                </tr>
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td>Room Type - Family Room</td>
+                                </tr>
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td>Room Type - Galley Kitchen</td>
+                                </tr>
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td>Window Features - Double Pane Windows</td>
+                                </tr>
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td>Flooring - Tile</td>
+                                </tr>
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td>Flooring - Carpet</td>
+                                </tr>
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td>Bathroom Features - Low Flow Toilet(s)</td>
+                                </tr>
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td>Bathroom Features - Shower</td>
+                                </tr>
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td>Flooring - Laminate</td>
+                                </tr>
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td>Kitchen Features - Tile Counters</td>
+                                </tr>
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td>Bathroom Features - Soaking Tub</td>
+                                </tr>
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td>Bathroom Features - Walk-in shower</td>
+                                </tr>
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td>Laundry Y</td>
+                                </tr>
+                                <tr>
+                                    <td>Fireplace Types</td>
+                                    <td>Living Room</td>
+                                </tr>
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td>Fireplace Y</td>
+                                </tr>
+                                <tr>
+                                    <td>Cooling Types</td>
+                                    <td>Cooling Y</td>
+                                </tr>
+                                <tr>
+                                    <td>Heating Types</td>
+                                    <td>Heating Y</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="subkolomdua">
+                        <table class="tableizer-table">
+                            <thead>
+                                <tr class="tableizer-firstrow">
+                                    <th>Exterior</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td># Parking Spaces</td>
+                                    <td>2</td>
+                                </tr>
+                                <tr>
+                                    <td>Parking Types</td>
+                                    <td>Parking Y</td>
+                                </tr>
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td>Direct Garage Access</td>
+                                </tr>
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td>Driveway</td>
+                                </tr>
+                                <tr>
+                                    <td>Exterior Features</td>
+                                    <td>Lot Features - Cul-De-Sac</td>
+                                </tr>
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td>Community Features - Sidewalks</td>
+                                </tr>
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td>Pool Features - None</td>
+                                </tr>
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td>Attached Garage Y</td>
+                                </tr>
+                                <tr>
+                                    <td>&nbsp;</td>
+                                    <td>Assessments - Unknown</td>
+                                </tr>
+                                <tr>
+                                    <td>Views</td>
+                                    <td>None</td>
+                                </tr>
+                                <tr>
+                                    <td>Construction Types</td>
+                                    <td>Common Walls - No Common Walls</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="kolomdua">
+                    <table class="tableizer-table">
+                        <thead>
+                            <tr class="tableizer-firstrow">
+                                <th>Property</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Property Type</td>
+                                <td>Residential</td>
+                            </tr>
+                            <tr>
+                                <td>Property Sub Type</td>
+                                <td>{{property_subtype}}</td>
+                            </tr>
+                            <tr>
+                                <td>Year Built</td>
+                                <td>{{yearbuilt}}</td>
+                            </tr>
+                            <tr>
+                                <td>HOA Fee</td>
+                                <td>$0.00</td>
+                            </tr>
+                            <tr>
+                                <td>County</td>
+                                <td>{{county}}</td>
+                            </tr>
+                            <tr>
+                                <td>School District</td>
+                                <td>los angeles unified</td>
+                            </tr>
+                            <tr>
+                                <td>Financial Terms</td>
+                                <td>Special Listing Conditions - Standard</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div style="border: 1px solid #cecece;padding-left:5px;padding-right:5px;padding-bottom:5px;">
+                        <h5>Contact Form</h5>
+                        <div class="container">
+                            <form action="action_page.php">
+
+                                <label for="fname">First Name</label>
+                                <input type="text" id="fname" name="firstname" placeholder="Your name..">
+
+                                <label for="lname">Last Name</label>
+                                <input type="text" id="lname" name="lastname" placeholder="Your last name..">
+                                <label for="subject">Subject</label>
+                                <textarea id="subject" name="subject" placeholder="Write something.."
+                                    style="height:200px"></textarea>
+
+                                <input type="submit" value="Submit">
+
+                            </form>
+                        </div>
+                    </div>
+
+
+
+                    <h5>Location</h5>
+                    <iframe
+                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d52935.93665399929!2d-117.925311658169!3d33.97979048998287!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x80c32a5d9d0ef4a7%3A0x80b8c96061df06c7!2sRowland+Heights%2C+CA%2C+USA!5e0!3m2!1sen!2sid!4v1554184085233!5m2!1sen!2sid"
+                        width="600" height="450" frameborder="0" style="border:0" allowfullscreen></iframe>
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+</script>
+
+
+<script>
+    /*
+     * And comma to a number (like 1,000,000)
+     * num: Int
+     */
+    function formatNumber(num) {
+        return (num || 0).toString().replace(/(\d)(?=(?:\d{3})+$)/g, '$1,');
+    }
+
+    /*
+     * Get parameters from url
+     * usage: var mytext = getUrlParam('text','Empty');
+     */
+    function getUrlVars() {
+        var vars = {};
+        var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function (m, key, value) {
+            vars[key] = value;
+        });
+        return vars;
+    }
+
+    function getUrlParam(parameter, defaultvalue) {
+        var urlparameter = defaultvalue;
+        if (window.location.href.indexOf(parameter) > -1) {
+            urlparameter = getUrlVars()[parameter];
+        }
+        return urlparameter;
+    }
+
+    apiurl = "http://127.0.0.1:5000/api";
+    // DOM Ready
+    $(document).ready(function () {
+        var propertyurl = apiurl + "/property";
+        var mlsname = getUrlParam("mlsname", "");
+        var listingid = getUrlParam("listingid", "");
+
+        // basic data
+        $.get(propertyurl + "/" + mlsname + "/" + listingid, function (data, status) {
+            //alert("Data: " + data["property_info"]["list_price"] + "\nStatus: " + status);
+        
+            var template_data = {};
+            for (var key in data["property_info"]) {
+                var tmp = key;
+                template_data[tmp] = data["property_info"][tmp];
+                if (tmp == "squarefeet" || tmp == "area") {
+                    template_data[tmp] = formatNumber(parseInt(data["property_info"][tmp]));
+                }
+                if (tmp == "list_price") {
+                    template_data[tmp] = "$" + formatNumber(parseInt(data["property_info"][tmp]));
+                }
+            }
+            console.log(template_data);
+
+            var html = template("test", template_data);
+            document.getElementById("content").innerHTML = html;
+
+            // image to gallerys
+            // should after template is loaded
+            if (status == "success") {
+                listingkeynumeric = data["property_info"]["listingkey_numeric"];
+                $.get(propertyurl + "photo/" + mlsname + "/" + listingkeynumeric, function (
+                    photodata, status) {
+                    var adapt_height = document.getElementById('item').clientHeight;
+                    console.log(adapt_height)
+                    for (var i = 0; i < photodata["imgs"].length; i++) {
+                        if (photodata["imgs"][i]["type"] == 'IMAGE') {
+                            var imgurl = photodata["imgs"][i]["url"];
+                            /*
+                            var width = photodata["imgs"][i]["width"];
+                            var height = photodata["imgs"][i]["height"];
+                            var adapt_width = Math.min(width, parseInt(width * adapt_height / height )).toString(); //dont use fixed height here
+                            */
+                            var adapt_width = "400";
+                            $("#autoWidth").append(" <li style=\"width: " + adapt_width +
+                                "px;\"><img src=\"" + imgurl + "\" /></li>");
+                        }
+                    }
+
+                    $('#autoWidth').lightSlider({
+                        autoWidth: true,
+                        loop: true,
+                        onSliderLoad: function () {
+                            $('#autoWidth').removeClass('cS-hidden');
+                        }
+                    });
+                });
+            }
+
+        });
+
+        // image to gallerys
+        // should after template is loaded
+        /*
+        $.get(apiurl+"photo/"+mlsname+"/"+listingid,function(photodata,status){
+            for (var i=0;i<photodata["urls"].length;i++) {
+                var imgurl = photodata["urls"][i];
+                var width = "400";
+                $("#autoWidth").append(" <li style=\"width: "+width+"px;\"><img id=\"img"+i.toString()+"\" src=\""+imgurl+"\" /></li>");
+                var img = document.getElementById('img'+i.toString());
+            }
+                
+            $('#autoWidth').lightSlider({
+                autoWidth: true,
+                loop: true,
+                onSliderLoad: function() {
+                    $('#autoWidth').removeClass('cS-hidden');
+                } 
+            });
+        });   */
+    });
+</script>
+{% endraw%}
+
+{% endblock %}
+
+{% block scripts %}
+
+{% endblock %}

@@ -1,0 +1,95 @@
+/* Calendar CSS Starts From here */
+
+th.fc-day-header.fc-widget-header {
+    background: #646464;
+    padding: 6px;
+    border-radius: 3px;
+    color: #fff;
+    box-shadow: 0px 3px 3px #888888;
+}
+.fc-head-container.fc-widget-header,.fc-row.fc-widget-header{border-style: none;border-width: 0;}
+.fc-body {margin-top: 6px;display: block;background: #eee;}
+.fc-left button , .fc-right button , .fc-center button{color: #fff;background: #646464;}
+.fc-center h2{color:#646464}
+.fc-title{color: #fff;}
+.fc-time{display:none}
+.fc-content{background:#646464;border: 1px solid #646464;padding: 0 5px;border-radius: 2px;position:initial!important}
+.fc-day{border-color: #ccc!important;}
+.fc-other-month{background:#fff}
+.fc-unthemed .fc-today{background: #ccc!important}
+.fc-day-number{color: #646464;font-weight: 600;font-size: 20px;line-height:30px}
+
+.fc-desc{
+	color: #000;
+	position: absolute;
+	display: none;
+	z-index: 1001;
+	line-height: 2;
+	background:#fff;
+	width: 300px;
+    padding: 5px;
+    box-shadow: 3px 4px 21px rgba(0,0,0,.38);
+    line-height: 20px;
+}
+
+.fc-content:hover .fc-desc{display:block}
+
+.event-cal-small-desc{    
+	float: left;
+    padding: 0 10px;
+    max-width: 300px;
+    white-space: pre;
+    width:60%
+ }
+ .event-cal-thumb{float: left;max-width: 33%;}
+ .event-cal-small-desc p {margin:0}
+ .fc-ltr .fc-popover .fc-header .fc-title{color: #646464;font-weight: 600;}
+ .fc-popover .fc-desc{margin-left:20px}
+ 
+ /* Calendar CSS Ends here */
+ 
+ /* Event Single Page CSS Starts From here */
+ 
+ .single-event-page {width:1020px;margin:0 auto}
+ .single-event-page h3{color:#646464;font-size: 22px;}
+ .single-event-summary {width:50%; float:left}
+ .single-event-thumb {width:50%; float:right;background: #fff;border-radius: 5px;}
+ .single-event-thumb img{padding: 5px;border-radius: 10px;width:100%}
+ .clear{clear:both}
+ .single-event-top-box{padding: 10px;background: #F6F6F6;border: 1px solid #e1e1e1;}
+ .single-event-bottom-box{margin-top:20px ;padding: 10px;background: #F6F6F6;border: 1px solid #e1e1e1;}
+ .single-event-summary .summary-data{display: block;width: 50%;float: left;}
+ .single-event-summary .location{width:100%;float:none}
+ .single-event-summary .summary-data .fa-calendar, 
+ .single-event-summary .summary-data .fa-map-marker , 
+ .single-event-summary .summary-data .fa-money{
+    display: block;
+    float: left;
+    vertical-align: middle;
+    margin: 12px 10px 0 0;
+    font-size: 20px;
+    color:#646464
+ }
+ .single-event-summary label{width: 100%;display: block;font-weight: 600;font-size: 14px;color:#646464}
+ .single-event-summary span{display: block;width: 100%;margin-left: 22px;}
+ .ecwmv-top-links {text-align:center;margin:10px 0}
+ .ecwmv-top-links a{
+    margin: 0 2px;
+    padding: 3px 8px;
+    font-size: 18px;
+    cursor: pointer;
+    color: #fff;
+    border-radius: 4px;
+    background: #646464;
+ }
+ .ecwmv-top-links a:hover {color: #fff;text-decoration: underline;}
+ .single-event-organizer p {margin: 8px 5px;}
+ #map-canvas{width:100%;min-height:300px}
+ 
+ 
+ /* Events List and Grid Views CSS */
+ .ecwmv-events-grids .single-grid h3 a{color:#646464}
+ .ecwmv-events-lists .single-list h3 a{color:#646464}
+ 
+   /* Events Widget CSS*/
+ .widget-list h3 a{color:#646464}

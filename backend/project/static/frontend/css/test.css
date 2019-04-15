@@ -1,0 +1,16 @@
+.entry-header {
+    display: none;
+}
+
+.entry-content {
+    float: left !important;
+    width: 100% !important;
+}
+
+.cS-hidden {
+    height: 1px;
+    opacity: 0;
+    filter: alpha(opacity=0);
+    overflow: hidden;
+}
+

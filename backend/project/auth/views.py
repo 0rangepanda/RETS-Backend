@@ -1,14 +1,24 @@
 from flask import render_template, redirect, url_for, flash, request
 from werkzeug.urls import url_parse
 from flask_login import login_user, logout_user, current_user
+from flask_login import login_required
 from flask_babel import _
 
 from project import db
 from project.auth import bp
 from project.auth.forms import LoginForm, RegistrationForm, \
     ResetPasswordRequestForm, ResetPasswordForm
-from project.models import User
+from project.models import User, UserFbads
 from project.auth.email import send_password_reset_email
+
+
+
+@bp.route('/usermanage', methods=['GET', 'POST'])
+@login_required
+def usermanage():
+    #all UserFbads
+    all_userfbads = UserFbads.query.all()
+    return render_template('auth/usermanage.html', all_userfbads=all_userfbads)
 
 
 def redirect_to_main_page():
@@ -50,6 +60,11 @@ def register():
         db.session.add(user)
         db.session.commit()
         flash(_('Congratulations, you are now a registered user!'))
+        # create user_fbads
+        userfb = UserFbads()
+        userfb.user = user.id
+        db.session.add(userfb)
+        db.session.commit()
         return redirect(url_for('auth.login'))
     return render_template('auth/register.html', title=_('Register'),
                            form=form)

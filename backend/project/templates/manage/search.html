@@ -2,115 +2,175 @@
 
 {% block content %}
 <div class="container">
-  <script>
-  // To keep the input of the last search
-  function getUrlParam(name) {
-    var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+  <script type="text/javascript">
+    // To keep the input of the last search
+    function getUrlParam(name) {
+      var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
       var r = window.location.search.substr(1).match(reg);
-      if(r != null) {
+      if (r != null) {
         return decodeURI(r[2]);
       }
       return null;
-  }
+    }
 
-  document.addEventListener('DOMContentLoaded', function(event) {
-      var getlist = ["city", "postalcode", "minlistprice", "maxlistprice", "bathmin", "bathmax", "bedmin", "bedmax"];
+    document.addEventListener('DOMContentLoaded', function (event) {
+      var getlist = ["city", "postalcode", "minlistprice", "maxlistprice", "minreduceprice", "maxreduceprice",
+        "minreducepercent", "maxreducepercent", "bathmin", "bathmax", "bedmin", "bedmax"
+      ];
       for (i = 0; i < getlist.length; i++) {
         document.getElementById(getlist[i]).value = getUrlParam(getlist[i]);
       }
-  });
+    });
 
-  //NOTE: if use this instead of onlick="return ...", will refresh page after click
-  //document.getElementById("clearinput").onclick=function(){clearInput()};
-  function clearInput() {
-    var getlist = ["city", "postalcode", "minlistprice", "maxlistprice", "bathmin", "bathmax", "bedmin", "bedmax"];
-    for (i = 0; i < getlist.length; i++) {
-      document.getElementById(getlist[i]).value = "";
+    //NOTE: if use this instead of onlick="return ...", will refresh page after click
+    //document.getElementById("clearinput").onclick=function(){clearInput()};
+    function clearInput() {
+      var getlist = ["city", "postalcode", "minlistprice", "maxlistprice", "minreduceprice", "maxreduceprice",
+        "minreducepercent", "maxreducepercent", "bathmin", "bathmax", "bedmin", "bedmax"
+      ];
+      for (i = 0; i < getlist.length; i++) {
+        document.getElementById(getlist[i]).value = "";
+      }
     }
-  }
+
+    //Called generate csv api and redirect to download page
+    function tofacebookads() {
+      //console.log("call tofacebookads()");
+      //cal api
+      var query = window.location.search.substring(1);
+      var vars = query.split('&');
+      var postData = {};
+      for (var i = 0; i < vars.length; i++) {
+        var pair = vars[i].split('=');
+        if (pair[1] != "") {
+          postData[pair[0]] = pair[1];
+        }
+      }
+      postData = (function (obj) {
+        var str = "";
+        for (var prop in obj) {
+          str += prop + "=" + obj[prop] + "&"
+        }
+        return str;
+      })(postData);
+      //console.log(postData);
+
+      var xhr = new XMLHttpRequest();
+      xhr.open("POST", "/api/facebookads", true);
+      xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+      xhr.onreadystatechange = function () {
+        var XMLHttpReq = xhr;
+        if (XMLHttpReq.readyState == 4) {
+          if (XMLHttpReq.status == 200) {
+            var text = XMLHttpReq.responseText;
+            //console.log(text);
+          }
+        }
+      };
+      xhr.send(postData);
+      //confirm window
+      var r = confirm("Confirm to create the xml file!");
+      //redirect
+      window.location.href = "/facebookads/download";
+    }
   </script>
 
-  <h2>Search Test</h2>
+  <h2>Search Property</h2>
   <form action="/manage/search" method="GET" id="searchform">
-    <p> City <input type="text" name="city" id="city"/>  &nbsp Postalcode <input type="text" name="postalcode" id="postalcode" /> </p>
-    <p> List Price <input type="number" name="minlistprice" id="minlistprice" /> ~ <input type="number" name="maxlistprice" id="maxlistprice" /> </p>
-    <p> Bathroom <input type="number" name="bathmin" id="bathmin" /> ~ <input type="number" name="bathmax" id="bathmax" /> </p>
-    <p> Bedroom <input type="number" name="bedmin" id="bedmin" /> ~ <input type="number" name="bedmax" id="bedmax" /> </p>
-    <!--<p> Limit  <input type="number" name="limit" /> </p>-->
-    
+    <p> City <input type="text" name="city" id="city" /> &nbsp Postalcode <input type="text" name="postalcode"
+        id="postalcode" />
+    </p>
+    <p> List Price <input type="number" name="minlistprice" id="minlistprice" /> ~ <input type="number"
+        name="maxlistprice" id="maxlistprice" /> </p>
+    <p> Reduce Price <input type="number" name="minreduceprice" id="minreduceprice" /> ~ <input type="number"
+        name="maxreduceprice" id="maxreduceprice" /> </p>
+    <p> Reduce Percent <input type="number" name="minreducepercent" id="minreducepercent" /> ~ <input type="number"
+        name="maxreducepercent" id="maxreducepercent" /> </p>
+    <p> Bathroom <input type="number" name="bathmin" id="bathmin" /> ~ <input type="number" name="bathmax"
+        id="bathmax" />
+    </p>
+    <p> Bedroom <input type="number" name="bedmin" id="bedmin" /> ~ <input type="number" name="bedmax" id="bedmax" />
+    </p>
+
     <p>
       Status
       <select name="status" form="searchform">
         {% for k,v in args.status.items() %}
-          {% if k==request.args["status"] %}
-            <option value={{k}} ,  selected = "selected">{{v}}</option>
-          {% else %}
-            <option value={{k}}>{{v}}</option>
-          {% endif %}
+        {% if k==request.args["status"] %}
+        <option value={{k}} , selected="selected">{{v}}</option>
+        {% else %}
+        <option value={{k}}>{{v}}</option>
+        {% endif %}
         {% endfor %}
       </select>
-        &nbsp
+      &nbsp
       Orderby
       <select name="orderby" form="searchform">
         {% for k,v in args.orderby.items() %}
-          {% if k==request.args["orderby"] %}
-            <option value={{k}} ,  selected = "selected">{{v}}</option>
-          {% else %}
-            <option value={{k}}>{{v}}</option>
-          {% endif %}
+        {% if k==request.args["orderby"] %}
+        <option value={{k}} , selected="selected">{{v}}</option>
+        {% else %}
+        <option value={{k}}>{{v}}</option>
+        {% endif %}
         {% endfor %}
       </select>
 
       {% if request.args.get('descend', '')=='true' %}
-        <input type="checkbox" name="descend" value="true" checked/> Descend
+      <input type="checkbox" name="descend" value="true" checked /> Descend
       {% else %}
-        <input type="checkbox" name="descend" value="true"/> Descend
+      <input type="checkbox" name="descend" value="true" /> Descend
       {% endif %}
     </p>
-
-    <input type="submit" value="search" />
-    <button id="clearinput" onclick="return clearInput()">clear input</button>
+    <br>
+    <input type="submit" value="Search" />
+    <button id="clearinput" onclick="clearInput()">Clear Input</button>
   </form>
 
+  <br>
+
+
   {% if res %}
-    <hr>
-      <h2>Results</h2>
-      <p>The SQL that was executed: {{res.query}}</p>
-      <p>If it succeeded: {{res.success}}</p>
-      <p>Total number of results: {{res.count}}</p>
+  <hr>
+  <h2>Results</h2>
+  <p>The SQL that was executed: {{res.query}}</p>
+  <p>If it succeeded: {{res.success}}</p>
+  <p>Total number of results: {{res.count}}</p>
+  <div>
+    <button id="tofbads" onclick="tofacebookads()">Download as facebook ads csv</button>
+  </div>
 
-      {% if res.count>0 %}
-    
-      <p>
-        <table border="1">
-          <!-- Header -->
-          <tr>
-            <th>Link</th>
-            {% for colname in res.colnames %}
-              <th>{{colname}}</th>
-            {% endfor %}
-          </tr>
-          
-          <!-- Content -->
-          {% for result in res.results %}
-            <tr>
-                <!-- Ugly but work! NOTE: no space between two of them -->
-                <td> <a href=" {{ "/manage/property/" }}{{ result[0] }} " > Goto </a> </td>
-              {% for elem in result %}
-                <td> {{elem}} </td>
-              {% endfor %}
-            </tr>
-          {% endfor %}
-        </table>
-      </p>
+  {% if res.count>0 %}
 
-      {% import "block.html" as blocks %}
-      {{ blocks.pager( url_for(request.endpoint)+'?'+paging.url, paging.total, paging.page_size, paging.curr_page) }} 
-      {% endif %}
+  <p>
+    <table border="1">
+      <!-- Header -->
+      <tr>
+        <th>Link</th>
+        {% for colname in res.colnames %}
+        <th>{{colname}}</th>
+        {% endfor %}
+      </tr>
 
-      
-    
+      <!-- Content -->
+      {% for result in res.results %}
+      <tr>
+        <!-- Ugly but work! NOTE: no space between two of them -->
+        <td> <a href=" {{ "/manage/property/" }}{{ result[0] }} "> Goto </a> </td>
+        {% for elem in result %}
+        <td> {{elem}} </td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </table>
+  </p>
+
+  {% import "block.html" as blocks %}
+  {{ blocks.pager( url_for(request.endpoint)+'?'+paging.url, paging.total, paging.page_size, paging.curr_page) }}
   {% endif %}
-            
+
+
+
+  {% endif %}
+
 </div>
 {% endblock %}

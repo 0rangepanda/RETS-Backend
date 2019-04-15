@@ -29,6 +29,22 @@ class Log(db.Model):
         super().__init__(**kwargs)
 
 
+# Misc lookup table (for CRMLS)
+class MiscLookup(db.Model):
+    """
+    A misc shorname to full name mapping (for CRMLS)
+    """
+    __tablename__ = "misclookup"
+
+    id = db.Column(db.Integer, primary_key=True)
+    misctype = db.Column(db.String, nullable=False)
+    value = db.Column(db.String, nullable=False)
+    short_value = db.Column(db.String, nullable=False)
+    long_value = db.Column(db.String, nullable=False)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+
 # County Model (for CRMLS)
 class County(db.Model):
     """
@@ -45,6 +61,21 @@ class County(db.Model):
         super().__init__(**kwargs)
 
 
+# Neighbor Model (for CRMLS)
+class Neighbor(db.Model):
+    """
+    A county shorname to full name mapping (for CRMLS)
+    """
+    __tablename__ = "neighbors"
+
+    id = db.Column(db.Integer, primary_key=True)
+    value = db.Column(db.String, nullable=False)
+    short_value = db.Column(db.String, nullable=False)
+    long_value = db.Column(db.String, nullable=False)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+
 # City Model (for CRMLS)
 class City(db.Model):
     """
@@ -57,6 +88,8 @@ class City(db.Model):
     short_value = db.Column(db.String, nullable=False)
     long_value = db.Column(db.String, nullable=False)
     county = db.Column(db.Integer, db.ForeignKey('counties.id'), nullable=True)
+    in_update = db.Column(db.Boolean, nullable=False, default=False)
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -103,6 +136,9 @@ class Property(db.Model):
     streetname = db.Column(db.String, nullable=True, default=__default__["String"])
     postalcode = db.Column(db.String, nullable=True, default=__default__["String"])
     postalcodep4 = db.Column(db.String, nullable=True, default=__default__["String"])
+    neighborhood = db.Column(db.String, nullable=True, default=__default__["String"])
+    latitude = db.Column(db.Numeric(12,9), nullable=True, default=__default__["Numeric"]) 
+    longitude = db.Column(db.Numeric(12,9), nullable=True, default=__default__["Numeric"]) 
     # infos
     beds = db.Column(db.SmallInteger, nullable=True, default=__default__["Int"])
     baths = db.Column(db.SmallInteger, nullable=True, default=__default__["Int"])
@@ -249,6 +285,18 @@ class Property(db.Model):
                    and not attr.startswith("__")]
         return members
 
+
+# User facebook ads manage info
+class UserFbads(db.Model):
+    __tablename__ = "user_fbads"
+
+    id = db.Column(db.Integer, primary_key=True)
+    url = db.Column(db.String(32), unique=True, nullable=True) # used in url param, need to be unique
+    fb_pixel = db.Column(db.String, nullable=True)
+    user = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, unique=True)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
 
 # User Model

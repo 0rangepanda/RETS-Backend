@@ -4,6 +4,11 @@ import configparser
 import sqlite3
 import concurrent.futures
 import time
+import logging
+import uuid
+
+from multiprocessing  import Queue
+from datetime import datetime
 from copy import deepcopy
 
 from project.models import Property
@@ -41,18 +46,20 @@ class CrmlsHandler(object):
             self.config = myconf()
             self.config.read(config_path, encoding=None)
             self.LOGIN_URL = self.config['Authentication']['LOGIN_URL']
-            self.USR_NAME = self.config['Authentication']['USR_NAME']
-            self.USR_PSWD = self.config['Authentication']['USR_PSWD']
+            self.USR_NAME  = self.config['Authentication']['USR_NAME']
+            self.USR_PSWD  = self.config['Authentication']['USR_PSWD']
             self.SelectField = self.config['SelectField']
-            self.ExtraField = self.config['ExtraField']
+            self.ExtraField  = self.config['ExtraField']
             self.NotNullableField = self.config['NotNullableField']
+            self.logfile_path = logfile_path
+            self.database = db
+            self.mlsname = "CRMLS"
+            self.app = app 
             self.status = {}
             for k, v in self.config['Status'].items():
                 self.status[k] = v
-            self.logfile_path=logfile_path
-            self.database=db
-            self.mlsname = "CRMLS"
-            self.app = app 
+            # create a new log file each time
+            self.writeQueue = Queue()
             return True
         else:
             return False
@@ -76,7 +83,7 @@ class CrmlsHandler(object):
         """
         session=librets.RetsSession(self.LOGIN_URL)
         if not session.Login(self.USR_NAME, self.USR_PSWD):
-            print("Error logging in! The credential may be invalid.")
+            self.writeQueue.put("Error login in! The credential may be invalid.")
             return None
         return session
 
@@ -87,8 +94,8 @@ class CrmlsHandler(object):
         :return: boolean
         """
         logout=session.Logout()
-        print("Logout message: " + logout.GetLogoutMessage())
-        print("Connect time: " + str(logout.GetConnectTime()))
+        self.writeQueue.put("Logout message: " + logout.GetLogoutMessage())
+        self.writeQueue.put("Connect time: " + str(logout.GetConnectTime()))
         return True
 
 
@@ -172,6 +179,28 @@ class CrmlsHandler(object):
         if session==None:
             self.__logout(fsession)
         return res
+    
+
+    def query_with_select(self, querystr, select_field, limit=1, session=None):
+        """
+        A wrapper of self.__query() with implicit fields
+        """
+        if session==None:
+            fsession = self.__login()
+        else:
+            fsession = session
+        select = ",".join(select_field)
+        results = self.__query(fsession, querystr, select, limit=limit)
+        res = []
+        while results.HasNext():
+            kwargs={} 
+            for key in select_field:
+                kwargs[key]=results.GetString(key)
+            res.append(kwargs)
+        if session==None:
+            self.__logout(fsession)
+        return res
+
 
     def getstatus(self, status=None):
         """
@@ -196,7 +225,7 @@ class CrmlsHandler(object):
         results = self.__query(session, "*", s, limit=limit)
 
         while results.HasNext():
-            print(self.__streetname(results))
+            self.writeQueue.put(self.__streetname(results))
             kwargs={}
             kwargs["mlsname"] = self.mlsname
             for key in self.SelectField:
@@ -233,7 +262,8 @@ class CrmlsHandler(object):
 
         # query from mls
         querystr = "(%s=%s)" % (col_name, value, ) # commonly col_name=city
-        print(querystr)
+        #logging.info("Update colum: "+querystr)
+        self.writeQueue.put("Update colum: "+querystr)
         session = self.__login()
         select = ",".join(self.SelectField.values()) + "," + ",".join(self.ExtraField.values())
         results = self.__query(session, querystr, select)
@@ -270,13 +300,12 @@ class CrmlsHandler(object):
             else:
                 # existing record 
                 # NOTE: can get diff list now
-                # TODO: logging
                 update_list = property_in_db.diff(kwargs)
                 if update_list:
                     # diff record -> update
                     property_in_db.from_dict(kwargs)
                     update_count += 1
-                    print(kwargs['listing_id'], update_list) # this line goes to logging
+                    self.writeQueue.put("Update info for property "+ kwargs['listing_id']+ ": "+ str(update_list)) 
         self.database.session.commit()
         self.__logout(session)
         return create_count, update_count, abandon_count
@@ -287,9 +316,9 @@ class CrmlsHandler(object):
         """
         if self.app:
             with self.app.app_context():
-                self.update_one(col_name, val, create=create)
+                return self.update_one(col_name, val, create=create)
         else:
-            self.update_one(col_name, val, create=create)
+            return self.update_one(col_name, val, create=create)
 
     def update_all(self, col_name, value_list, create=False):
         """
@@ -306,9 +335,9 @@ class CrmlsHandler(object):
             total_create += create_count
             total_update += update_count
             total_abandon += abandon_count
-            print("[%s] create: %s,  update: %s, abandon: %s"
+            self.writeQueue.put("[%s] create: %s,  update: %s, abandon: %s"
                   % (value, create_count, update_count, abandon_count, ))
-        print("Total create: %s,  update: %s, abandon: %s" 
+        self.writeQueue.put("Total create: %s,  update: %s, abandon: %s" 
             % (total_create, total_update, total_abandon, ))
         return True
 
@@ -320,13 +349,23 @@ class CrmlsHandler(object):
         :param value_list:
         :return: if success
         """
+        # clear queue
+        self.writeQueue = Queue()
         with concurrent.futures.ThreadPoolExecutor(max_workers=threads) as executor:
             future_updateone = {executor.submit(self.update_one_with_context, col_name, val): val for val in value_list}
             for future in concurrent.futures.as_completed(future_updateone):
                 val = future_updateone[future]
                 create_count, update_count, abandon_count = future.result()
-                print("[%s] create: %s,  update: %s, abandon: %s" 
+                self.writeQueue.put("[%s] create: %s,  update: %s, abandon: %s" 
                       % (val, create_count, update_count, abandon_count, ))
+        # create new log file and write to log file
+        outFile = open(os.path.join(self.logfile_path, "crm_update.log."+str(uuid.uuid1()) ),'w+')
+        dt = datetime.now()
+        outFile.write(dt.strftime( '%Y-%m-%d %H:%M:%S' ) + "\n")
+        while self.writeQueue.qsize():
+            outFile.write(self.writeQueue.get() + "\n")
+        outFile.flush()
+        outFile.close()
         return True
 
     ##

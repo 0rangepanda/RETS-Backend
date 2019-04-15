@@ -31,7 +31,7 @@
     <table border="1">
         <!-- Header -->
         <tr>
-        {% for colname in res.colnames[10:] %}
+        {% for colname in res.colnames[10:25] %}
             <th>{{colname}}</th>
         {% endfor %}
         </tr>
@@ -39,12 +39,30 @@
         <!-- Content -->
         {% for result in res.results %}
         <tr>
-            {% for elem in result[10:] %}
+            {% for elem in result[10:25] %}
             <td> {{elem}} </td>
             {% endfor %}
         </tr>
         {% endfor %}
-        </table>    
+    </table>
+    <br>
+    <table border="1">
+        <!-- Header -->
+        <tr>
+        {% for colname in res.colnames[25:] %}
+            <th>{{colname}}</th>
+        {% endfor %}
+        </tr>
+            
+        <!-- Content -->
+        {% for result in res.results %}
+        <tr>
+            {% for elem in result[25:] %}
+            <td> {{elem}} </td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </table>     
     </p>
 {% endif %}
 

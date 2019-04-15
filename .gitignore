@@ -2,4 +2,7 @@
 .idea/*
 *.pyc
 *.pyc*
+backend/datas/*
 backend/instance/*
+backend/logs/*
+docker-compose.yml

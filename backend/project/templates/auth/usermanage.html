@@ -1,0 +1,324 @@
+{% extends 'base.html' %}
+{% block title %}User Info Management{% endblock %}
+
+{% block head %}
+{{ super() }}
+<script src="{{ url_for('static', filename='frontend/js/jquery.min.js') }}"></script>
+<script src="{{ url_for('static', filename='frontend/js/bootstrap.bundle.js') }}"></script>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='frontend/css/bootstrap.css') }}">
+
+<script>
+    // REST wrapper
+    function rest_wrapper(action, url, jsondata) {
+        var xhr = new XMLHttpRequest();
+        if (action != "GET") {
+            xhr.open(action, url, true);
+            xhr.setRequestHeader("Content-type", "application/json");
+            xhr.onreadystatechange = function () {
+                var XMLHttpReq = xhr;
+                if (XMLHttpReq.readyState == 4) {
+                    if (XMLHttpReq.status == 200) {
+                        var text = XMLHttpReq.responseText;
+                    }
+                }
+            };
+            xhr.send(JSON.stringify(jsondata));
+            return;
+        } else {
+            // GET
+            var search = "";
+            for (var key in jsondata) {
+                search += key + "=" + jsondata[key] + "&";
+            }
+            var geturl = url + "?" + search;
+            xhr.open("GET", geturl, false);
+            xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+            xhr.send(JSON.stringify(jsondata));
+            var res = JSON.parse(xhr.responseText);
+            return res;
+        }
+    }
+
+    //global vars
+    cur_editing_id = -1;
+
+    //update date for id= cur_editing_id
+    function f_update_data() {
+        var objid = cur_editing_id;
+        var url = "/api/userfbads";
+        var action = "POST";
+        var jsondata = {
+            "id": objid,
+            "url": document.getElementById("url-input").value,
+            "pixel": document.getElementById("pixel-input").value,
+        };
+        var r = confirm("Confirm update!");
+        rest_wrapper(action, url, jsondata);
+        window.location.href = "/auth/usermanage";
+    }
+
+    //Show detail
+    function f_show_detail_form(objid) {
+        f_close_form();
+        document.getElementById("div_detail_form").setAttribute("style", "display: block;")
+        var url = "/api/userfbads";
+        var action = "GET";
+        var jsondata = {
+            "id": objid,
+        };
+        var res = rest_wrapper(action, url, jsondata);
+        document.getElementById("div_det_uacc_id").innerHTML = res["id"];
+        document.getElementById("div_det_uacc_url").innerHTML = res["url"];
+        document.getElementById("div_det_uacc_pixel").innerText = res["pixel"];
+        //console.log(res["pixel"]);
+    }
+
+    //Show update form
+    function f_show_update_form(objid) {
+        f_close_form();
+        document.getElementById("editing_id").innerText = "Editing data id = " + String(objid);
+        var url = "/api/userfbads";
+        var action = "GET";
+        var jsondata = {
+            "id": objid,
+        };
+        var res = rest_wrapper(action, url, jsondata);
+        document.getElementById("url-input").value = res["url"];
+        document.getElementById("pixel-input").innerText = res["pixel"];
+        document.getElementById("btn_add").setAttribute("style", "display: none;")
+        document.getElementById("btn_update").setAttribute("style", "display: inline-block;")
+        document.getElementById("div_input_form").setAttribute("style", "display: block;")
+        cur_editing_id = objid;
+    }
+
+    // reset all fields of all forms
+    function f_reset_form() {
+        document.getElementById("div_det_uacc_id").innerHTML = "";
+        document.getElementById("div_det_uacc_url").innerHTML = "";
+        document.getElementById("div_det_uacc_pixel").innerText = "";
+        document.getElementById("editing_id").innerText = "";
+        document.getElementById("url-input").value = "";
+        document.getElementById("pixel-input").innerText = "";
+        return;
+    }
+
+    //
+    function f_reset_form_input() {
+        document.getElementById("url-input").value = "";
+        document.getElementById("pixel-input").innerText = "";
+        return;
+    }
+
+    // Open add data form
+    function f_show_add_form() {
+        f_close_form();
+        f_reset_form();
+        document.getElementById("editing_id").innerText = "Adding new record";
+        document.getElementById("btn_add").setAttribute("style", "display: inline-block;")
+        document.getElementById("btn_update").setAttribute("style", "display: none;")
+        document.getElementById("div_input_form").setAttribute("style", "display: block;")
+    }
+
+    // Actually add data
+    function f_add_data() {
+        //console.log(document.getElementById("pixel-input").value);
+        var url = "/api/userfbads";
+        var action = "PUT";
+        var jsondata = {
+            "url": document.getElementById("url-input").value,
+            "pixel": document.getElementById("pixel-input").value,
+        };
+        var r = confirm("Confirm add data!");
+        rest_wrapper(action, url, jsondata);
+        window.location.href = "/auth/usermanage";
+    }
+
+    //delete
+    function f_delete(objid) {
+        var url = "/api/userfbads";
+        var action = "DELETE";
+        var jsondata = {
+            "id": objid,
+        };
+        var r = confirm("Confirm delete data!");
+        rest_wrapper(action, url, jsondata);
+        window.location.href = "/auth/usermanage";
+    }
+
+    //set display to none
+    function f_close_form() {
+        document.getElementById("div_detail_form").setAttribute("style", "display: none;")
+        document.getElementById("div_input_form").setAttribute("style", "display: none;")
+    }
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>User Info Management</h1>
+    <br>
+    {% if current_user.username=="admin" %}
+    <!-- Admin page, show all pixel -->
+    <div class="container">
+
+        <!-- Detail Form -->
+        <div class="form panel panel-primary" id="div_detail_form" style="display: none;">
+            <!-- Form header -->
+            <div class="panel-heading">
+                <button type="button" class="close" onclick="f_close_form()"><span>×</span></button>
+                <span>Show Detail</span>
+            </div>
+
+            <!-- Form content -->
+            <div class="panel-body">
+                <div class="tab-content">
+                    <!-- Data -->
+                    <div role="tabpanel" class="tab-pane fade in active" id="div_det_data">
+                        <table class="detail">
+                            <tbody>
+                                <tr>
+                                    <td valign="top"><b>Id</b></td>
+                                    <td valign="top"><b>:</b></td>
+                                    <td>
+                                        <div id="div_det_uacc_id">{{all_userfbads[1].id}}</div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td valign="top"><b>Url</b></td>
+                                    <td valign="top"><b>:</b></td>
+                                    <td>
+                                        <div id="div_det_uacc_url">{{all_userfbads[1].url}}</div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td valign="top"><b>Pixel</b></td>
+                                    <td valign="top"><b>:</b></td>
+                                    <td>
+                                        <div id="div_det_uacc_pixel">{{all_userfbads[1].fb_pixel}}</div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <!-- From footer -->
+            <div class="panel-footer" style="margin: 1px;">
+                <button class="btn btn-default" onclick="f_close_form()">Close</button>
+            </div>
+
+        </div>
+
+        <!-- Edit Form -->
+        <div class="form panel panel-primary" id="div_input_form" style="display: none;">
+            <!-- Form header -->
+            <div class="panel-heading">
+                <button type="button" class="close"
+                    onclick="f_reset_form('fm_input');f_close_form()"><span>×</span></button>
+                <span class="title" id="editing_id"></span>
+            </div>
+
+            <!-- Form content -->
+            <div class="panel-body">
+                <form class="form-horizontal" id="fm_input">
+                    <!-- Primary Key for Update -->
+                    <input type="hidden" id="hdn_in_pk" name="PrimaryKey" value="63">
+
+                    <!-- Url -->
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">Url</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="url-input" placeholder="Input user url"
+                                name="uacc_username" required="" style="width: 80%;">
+                        </div>
+                    </div>
+
+                    <!-- Facebook Pixel -->
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">Pixel</label>
+                        <div class="col-sm-10">
+                            <textarea id="pixel-input" name="Pixel" rows="10" placeholder="Paste pixel here"
+                                style="width: 80%; padding: 10px;"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Admin Group -->
+                    <!--
+                    <div class="form-group">
+                        <label for="txt_in_uacc_group_fk" class="col-sm-2 control-label">Group</label>
+                        <div class="col-sm-10">
+                            <select id="so_in_uacc_group_fk" class="form-control" name="uacc_group_fk" required="">
+                                <option value="">Select One</option>
+                                <option value="1">Super Admin</option>
+                                <option value="5">Staff</option>
+                                <option value="8">User</option>
+                            </select>
+                        </div>
+                    </div>
+                    -->
+                    <!-- Message container -->
+                    <!-- <div class="message" id="div_in_message" style="display: none;"></div> -->
+                </form>
+            </div>
+            <!-- From footer -->
+            <div class="panel-footer" style="margin: 1px;">
+                <button class="btn btn-default" id="btn_add" onclick="f_add_data()" style="display: none;">Save</button>
+                <button class="btn btn-default" id="btn_update" onclick="f_update_data()">Update</button>
+                <button class="btn btn-default" onclick="f_reset_form_input();" >Clear</button>
+                <button class="btn btn-default" onclick="f_reset_form();f_close_form()">Close</button>
+            </div>
+        </div>
+
+        <button onclick="f_show_add_form()"> Add a new record </button>
+        <br>
+
+        <!-- Table -->
+        <div id="main_table">
+            <table id="data_table" class="table table-striped table-bordered table-hover dataTable" role="grid"
+                aria-describedby="data_table_info" style="width: 1100px;">
+                <thead>
+                    <tr role="row">
+                        <th width="1px" class="sorting_disabled" rowspan="1" colspan="1" aria-label="&amp;nbsp;"
+                            style="width: 20px;">&nbsp;</th>
+                        <th width="1px" class="sorting_disabled" rowspan="1" colspan="1" aria-label="&amp;nbsp;"
+                            style="width: 9px;">&nbsp;</th>
+                        <th width="1px" class="sorting_disabled" rowspan="1" colspan="1" aria-label="&amp;nbsp;"
+                            style="width: 9px;">&nbsp;</th>
+                        <th width="25%" class="sorting_asc" tabindex="0" aria-controls="data_table" rowspan="1"
+                            colspan="1" aria-sort="ascending" aria-label="Username: activate to sort column descending"
+                            style="width: 200px;">Id</th>
+                        <th width="25%" class="sorting" tabindex="0" aria-controls="data_table" rowspan="1" colspan="1"
+                            aria-label="FullName: activate to sort column ascending" style="width: 200px;">Url</th>
+                        <th width="25%" class="sorting" tabindex="0" aria-controls="data_table" rowspan="1" colspan="1"
+                            aria-label="Email: activate to sort column ascending" style="width: 200px;">Pixel</th>
+                        <th width="25%" class="sorting" tabindex="0" aria-controls="data_table" rowspan="1" colspan="1"
+                            aria-label="Email: activate to sort column ascending" style="width: 200px;">User</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for userfbads in all_userfbads %}
+                    <tr role="row" class="odd">
+                        <td><a href="#" class="detail" onclick="f_show_detail_form({{userfbads.id}})">Detail</a></td>
+                        <td><a href="#" class="detail"
+                                onclick="f_reset_form();f_show_update_form({{userfbads.id}})">Edit</a></td>
+                        <td><a href="#" class="detail" onclick="f_delete({{userfbads.id}})">Delete</a></td>
+                        <td>{{userfbads.id}}</td>
+                        <td>{{userfbads.url}}</td>
+                        {% if userfbads.fb_pixel %}
+                        <td>{{userfbads.fb_pixel[:30]}}...</td>
+                        {% else %}
+                        <td>{{userfbads.fb_pixel}}</td>
+                        {% endif %}
+                        <td>{{userfbads.user}}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <!-- User page, only show users pixel -->
+    {% endif %}
+</div>
+{% endblock %}
