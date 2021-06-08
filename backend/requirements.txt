@@ -32,7 +32,7 @@ keyrings.alt==1.3
 librets-python===1.6.3-SNAPSHOT
 Mako==1.0.7
 MarkupSafe==1.1.1
-Pillow==5.4.1
+Pillow==8.2.0
 psycopg2==2.7.3.1
 pyasn1==0.1.9
 pycrypto==2.6.1
